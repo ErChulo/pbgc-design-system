@@ -1,0 +1,29 @@
+{
+  "name": "pbgc-design-system",
+  "version": "1.0.0",
+  "description": "Pension Benefit Guaranty Corporation (PBGC) Design System tokens, atomic components, and Storybook workbench (USWDS 3.0 Flat Standard, Section 508 / WCAG 2.1 AAA).",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "lucide-react": "^0.378.0",
+    "gsap": "^3.12.5",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3",
+    "vite": "^5.2.11"
+  }
+}
