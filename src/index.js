@@ -13,3 +13,7 @@ export { HeaderNav } from './components/HeaderNav/HeaderNav.jsx';
 export { Breadcrumb } from './components/Breadcrumb/Breadcrumb.jsx';
 export { Pagination } from './components/Pagination/Pagination.jsx';
 export { DataTable } from './components/DataTable/DataTable.jsx';
+export { Badge } from './components/Badge/Badge.jsx';
+export { Accordion } from './components/Accordion/Accordion.jsx';
+export { SearchBar } from './components/SearchBar/SearchBar.jsx';
+export { Footer } from './components/Footer/Footer.jsx';

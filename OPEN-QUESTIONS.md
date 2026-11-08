@@ -43,4 +43,4 @@ The other secondary colors (Gray, Light Blue Gray, Medium Green, Teal, Light Gre
 | Q13 | **Icon set.** `pbgc-branding-templates-icons-logo.txt` points to an internal SharePoint library (`COLA/Pages/Logos_Icons_Templates.aspx`) that was not available to this review. Does it hold an official icon set and web templates that should replace the status icons drawn here? |
 | Q14 | **Web templates.** The only templates in the source folder are Word documents. Does COLA have a web page template or an existing PBGC.gov pattern library to align with? |
 | Q15 | **Editorial rules for UI microcopy** (buttons, errors, validation messages). The Editorial Style Guide covers prose; it does not cover interface text. |
-| Q16 | **Which components does PBGC need next?** Backlog: Badge, SearchBar, Footer, Sidebar, NavGroup, date input, tabs, accordion, modal, charts. Which real applications will consume this system first, and what do they need that is not listed? |
+| Q16 | **Which components does PBGC need next?** Backlog: Sidebar, NavGroup, date input, tabs, modal, charts. Which real applications will consume this system first, and what do they need that is not listed? |

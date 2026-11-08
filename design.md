@@ -169,8 +169,12 @@ The v1.0.0 mapping "desktop = Word interior-page template" is withdrawn: the two
 | ErrorSummary | Organism | Built | Focus moves to it on mount; each item links to its field; messages match field-level messages |
 | Breadcrumb | Molecule | Built | `<nav aria-label="Breadcrumb">` + `<ol>`; current page is text with `aria-current="page"`; separators are CSS |
 | Pagination | Molecule | Built | Real links; `aria-current="page"`; "Previous" and "Next" are words; 44px targets |
-| Badge, SearchBar, Footer, Sidebar, NavGroup, date input | | Backlog | Native-element first; see `OPEN-QUESTIONS.md` Q16 |
-| Tabs, accordion, modal, charts | | Backlog | Custom widgets: full keyboard model required before building (see §8) |
+| Badge | Atom | Built | Text carries the meaning; color only reinforces it; not interactive |
+| Accordion | Organism | Built | Native `<details>/<summary>`: browser supplies keyboard and state; optional exclusive mode |
+| SearchBar | Molecule | Built | `<form role="search">`, visible label by default, GET submit, no JavaScript required |
+| Footer | Organism | Built | `<footer>` landmark on PBGC Blue; white logo; underlined white links; column headings are `h2` |
+| Sidebar, NavGroup, date input | | Backlog | Native-element first; see `OPEN-QUESTIONS.md` Q16 |
+| Tabs, modal, charts | | Backlog | Custom widgets: full keyboard model required before building (see §8) |
 
 Naming note: v1.0.0 mixed up layers (Input as a molecule, Alert as an organism). Layer here means: **atom** = single element; **molecule** = a small group working as one unit; **organism** = a self-contained section.
 

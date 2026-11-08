@@ -110,7 +110,7 @@ Your project goal is a storybook.js project. What exists is one React file with 
 | C3 wrong blue | `#002D72`, full brand palette, one source of truth | `tokens/tokens.json` |
 | C4 fake claims | Computed contrast on every pair, build fails below threshold; axe gate over every story | `scripts/` |
 | C5 typography | Arial / Helvetica Neue / Garamond system stacks, no web fonts | `design.md` §4 |
-| C6 not Storybook | Real Storybook 10 project, 39 stories, a11y addon set to error | `.storybook/`, `src/` |
+| C6 not Storybook | Real Storybook 10 project, 49 stories, a11y addon set to error | `.storybook/`, `src/` |
 | B1 clickable div | Stretched-link card with a real heading link | `FactsheetCard` |
 | B2 no mobile nav | Skip link, links, `aria-current`, disclosure menu, Escape handling | `HeaderNav` |
 | B3 dangling describedby | `useId`, hint and error both referenced, visible "(required)" | `TextField` |

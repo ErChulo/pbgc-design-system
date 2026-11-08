@@ -17,8 +17,9 @@ tokens/
   contrast-report.md           Generated. Do not edit.
 src/
   styles/components.css        All component styles. Plain CSS, tokens only.
-  components/                  Button, Logo, TextField, Select, ChoiceGroup, Alert, ErrorSummary, FactsheetCard,
-                               HeaderNav, Breadcrumb, Pagination, DataTable (+ stories)
+  components/                  Button, Logo, TextField, Select, ChoiceGroup, Alert, ErrorSummary, Badge,
+                               Accordion, SearchBar, FactsheetCard, HeaderNav, Footer, Breadcrumb, Pagination,
+                               DataTable (+ stories)
   index.js                     Public entry: every component
   foundations/                 Color and typography stories
 .storybook/                    Storybook config (no telemetry)
@@ -94,7 +95,7 @@ Do not push logo artwork to a public repository until COLA confirms it is permit
 |---|---|
 | 59 color-pair contrast checks, light + dark | Pass (computed, `tokens/contrast-report.md`) |
 | Storybook builds | Pass |
-| axe-core on 39 stories x 2 themes (78 runs) | Pass, 0 violations |
+| axe-core on 49 stories x 2 themes (98 runs) | Pass, 0 violations |
 | axe-core on the reference page at 1200px and 375px, both themes | Pass, 0 violations, no horizontal scroll, 0 external requests |
 | Negative control (axe flags known-bad contrast and alt text here) | Pass |
 | Keyboard and screen-reader testing (NVDA, JAWS, VoiceOver) | **Not done** |
