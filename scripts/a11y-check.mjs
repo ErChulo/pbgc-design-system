@@ -57,12 +57,24 @@ for (const theme of themes) {
     await page.waitForSelector('#storybook-root > *', { timeout: 15000 });
     await page.waitForTimeout(250);
     await page.evaluate(axeSource);
-    const result = await page.evaluate(() =>
-      // eslint-disable-next-line no-undef
-      axe.run(document.querySelector('#storybook-root'), {
-        runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'] },
-      })
-    );
+    // Storybook's own a11y addon runs axe on every story at load (a11y.test = 'error'). On slower stories (an
+    // open dialog, say) that run can still be going when ours starts, and axe refuses to run twice at once.
+    // Wait and retry; this changes timing only, not what is checked.
+    let result;
+    for (let attempt = 0; ; attempt++) {
+      try {
+        result = await page.evaluate(() =>
+          // eslint-disable-next-line no-undef
+          axe.run(document.querySelector('#storybook-root'), {
+            runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'] },
+          })
+        );
+        break;
+      } catch (e) {
+        if (!/already running/i.test(String(e)) || attempt >= 20) throw e;
+        await page.waitForTimeout(500);
+      }
+    }
     const violations = result.violations.filter((v) => !PAGE_LEVEL.has(v.id));
     total++;
     if (violations.length) {

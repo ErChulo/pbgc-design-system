@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.2.0 (2026-11-13)
+
+Overlay and feedback components, built native-first and delivered twice: React, and a framework-free build for single-file HTML apps. Both share one behavior implementation (`src/behaviors/index.js`), so they cannot drift.
+
+### Added
+- Components: Dialog (center, large, drawer) and ConfirmDialog, Spinner, ProgressBar, Skeleton, ActionMenu, Tooltip, Toggletip, FilePicker, Carousel, Toast (`useToast` / `PBGC.toast`).
+- Tokens: `z` (sticky, overlay, toast), `elevation` (1-3), `bg.scrim` in both themes. Six new contrast pairs (65 checks, was 59).
+- `dist/pbgc.js` + `dist/pbgc.css` (`npm run vanilla`) and demos of every new component in the single-file reference page.
+- `scripts/behavior-check.mjs` (`npm run test:behavior`): real keystrokes and pointer events, axe on every OPEN state, identical scenarios against the React and vanilla builds.
+- `scripts/reference-check.mjs` (`npm run test:reference`): reference page at 1200px and 375px, both themes; 0 axe violations, no horizontal scroll, no network requests. The README previously claimed this check without a script behind it.
+- Package exports `./behaviors`, `./pbgc.js`, `./pbgc.css`.
+
+### Changed
+- `design.md` section 6: looping animation is allowed ONLY for loading indicators (labelled, stopped under reduced motion). Previously "no looping animation", which a spinner contradicts.
+- `design.md` section 8: ActionMenu is now the single sanctioned custom menu; modal-dialog focus behavior stated accurately (a native modal does not wrap focus).
+- Test suite (`npm test`) now runs the vanilla build, the reference check and the behavior check.
+
+### Known gaps
+- Browser baseline for `<dialog>`, Popover API and `inert` is unconfirmed (`OPEN-QUESTIONS.md` Q17).
+- No keyboard or screen-reader testing with NVDA, JAWS or VoiceOver. Tooltip, menu and toast announcements in particular need it.
+- Carousel touch swipe is untested; no autoplay by design.
+
 ## 1.1.0 (2026-11-07)
 
 Complete rebuild after review (`CRITIQUE.md`). v1.0.0 was missing its color tokens, used a non-brand blue and non-brand fonts, drew a substitute logo, and printed accessibility results that no test produced.

@@ -1,0 +1,503 @@
+/* PBGC behaviors v1.2.0
+   Framework-free behavior for the interactive components. This file is the ONLY implementation of that
+   behavior: the React components render the same markup and call these functions, and the single-file
+   reference page inlines this file as-is. One implementation means the two builds cannot drift apart.
+
+   Contract: markup + data attributes in, behavior out. Every enhance*() returns { destroy, ...extras }.
+   No dependencies, no network, no build step required to use it from a plain <script type="module">.
+
+   Browser support: <dialog>, the Popover API (Chrome/Edge 114+, Firefox 125+, Safari 17+) and `inert`.
+   See OPEN-QUESTIONS.md Q17: confirm PBGC's supported browser baseline. */
+
+const $ = (root, sel) => root.querySelector(sel);
+const $$ = (root, sel) => Array.from(root.querySelectorAll(sel));
+let uid = 0;
+const nextId = (prefix) => `${prefix}-${++uid}`;
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const isOpen = (el) => el.matches(':popover-open');
+
+/* Status icons: a DIFFERENT SHAPE per status so meaning never depends on color alone. Same artwork as Icon.jsx. */
+const ICON_PATHS = {
+  info: '<circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.5v.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
+  success: '<circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7.5 12.5l3 3 6-6.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>',
+  warning: '<path d="M12 3L2 20h20L12 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v5M12 17.5v.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
+  error: '<path d="M8 2h8l6 6v8l-6 6H8l-6-6V8l6-6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>',
+};
+const iconSvg = (name, cls) =>
+  `<svg class="${cls}" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICON_PATHS[name]}</svg>`;
+
+/* ---------- positioning (popovers live in the top layer, so they are never clipped by scroll regions) ---------- */
+function placeNear(trigger, el, { prefer = 'bottom', align = 'start', gap = 6 } = {}) {
+  const margin = 8;
+  el.style.position = 'fixed';
+  el.style.inset = 'auto';
+  el.style.margin = '0';
+  const t = trigger.getBoundingClientRect();
+  const w = el.offsetWidth;
+  const h = el.offsetHeight;
+  const vw = document.documentElement.clientWidth;
+  const vh = document.documentElement.clientHeight;
+  let top = prefer === 'bottom' ? t.bottom + gap : t.top - h - gap;
+  if (prefer === 'bottom' && top + h > vh - margin && t.top - h - gap >= margin) top = t.top - h - gap;
+  if (prefer === 'top' && top < margin && t.bottom + gap + h <= vh - margin) top = t.bottom + gap;
+  let left = align === 'center' ? t.left + t.width / 2 - w / 2 : t.left;
+  left = Math.max(margin, Math.min(left, vw - w - margin));
+  el.style.top = `${Math.max(margin, top)}px`;
+  el.style.left = `${left}px`;
+  el.dataset.placed = 'true';
+}
+
+/* While a popover is open: dismiss on outside press, page scroll and resize. Returns a remover. */
+function dismissWhileOpen(containers, close) {
+  const inside = (t) => containers.some((c) => c.contains(t));
+  const onDown = (e) => { if (!inside(e.target)) close(); };
+  const onScroll = (e) => { if (!inside(e.target)) close(); };
+  document.addEventListener('pointerdown', onDown, true);
+  window.addEventListener('scroll', onScroll, { capture: true, passive: true });
+  window.addEventListener('resize', close);
+  return () => {
+    document.removeEventListener('pointerdown', onDown, true);
+    window.removeEventListener('scroll', onScroll, true);
+    window.removeEventListener('resize', close);
+  };
+}
+
+/* ---------- Dialog (native <dialog>: focus trap, Escape, inert background and focus return are the browser's) ---------- */
+export function enhanceDialog(dialog) {
+  const ac = new AbortController();
+  const { signal } = ac;
+  let downOnBackdrop = false;
+  // Backdrop clicks target the <dialog> itself. Require the press to START on the backdrop too, so
+  // selecting text inside the panel and releasing outside does not close it.
+  dialog.addEventListener('pointerdown', (e) => { downOnBackdrop = e.target === dialog; }, { signal });
+  dialog.addEventListener('click', (e) => {
+    if (e.target === dialog && downOnBackdrop && dialog.dataset.dismissible !== 'false') dialog.close('dismiss');
+    else if (e.target.closest('[data-pbgc-close]')) dialog.close('close');
+  }, { signal });
+  return { destroy: () => ac.abort() };
+}
+export const openDialog = (dialog) => { if (!dialog.open) dialog.showModal(); };
+export const closeDialog = (dialog, returnValue) => { if (dialog.open) dialog.close(returnValue); };
+
+/* ---------- Menu button (WAI-ARIA APG "menu button" pattern) ---------- */
+export function enhanceMenu(root) {
+  const trigger = $(root, '.pbgc-menu__trigger');
+  const list = $(root, '.pbgc-menu__list');
+  const ac = new AbortController();
+  const { signal } = ac;
+  const items = () => $$(list, '[role="menuitem"]');
+  let stopDismiss = () => {};
+  let buffer = '';
+  let bufferTimer = 0;
+
+  const focusItem = (i) => {
+    const all = items();
+    if (!all.length) return;
+    const idx = ((i % all.length) + all.length) % all.length;
+    all.forEach((el, n) => { el.tabIndex = n === idx ? 0 : -1; });
+    all[idx].focus();
+  };
+  const close = () => {
+    if (!isOpen(list)) return;
+    list.hidePopover();
+    delete list.dataset.placed;
+    trigger.setAttribute('aria-expanded', 'false');
+    stopDismiss();
+  };
+  const open = (which = 'first') => {
+    if (isOpen(list)) return;
+    list.showPopover();
+    placeNear(trigger, list, { prefer: 'bottom', align: 'start' });
+    trigger.setAttribute('aria-expanded', 'true');
+    stopDismiss = dismissWhileOpen([root], close);
+    focusItem(which === 'last' ? -1 : 0);
+  };
+
+  trigger.addEventListener('click', () => (isOpen(list) ? close() : open('first')), { signal });
+  trigger.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); open('first'); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); open('last'); }
+  }, { signal });
+
+  list.addEventListener('keydown', (e) => {
+    const all = items();
+    const cur = all.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown') { e.preventDefault(); focusItem(cur + 1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); focusItem(cur - 1); }
+    else if (e.key === 'Home') { e.preventDefault(); focusItem(0); }
+    else if (e.key === 'End') { e.preventDefault(); focusItem(-1); }
+    else if (e.key === 'Escape') { e.preventDefault(); close(); trigger.focus(); }
+    else if (e.key === 'Tab') { trigger.focus(); close(); } // default Tab then moves on from the trigger
+    else if (e.key === ' ' && document.activeElement?.tagName === 'A') { e.preventDefault(); document.activeElement.click(); }
+    else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && e.key !== ' ') {
+      clearTimeout(bufferTimer);
+      buffer += e.key.toLowerCase();
+      bufferTimer = setTimeout(() => { buffer = ''; }, 500);
+      const start = buffer.length === 1 ? cur + 1 : cur;
+      for (let n = 0; n < all.length; n++) {
+        const idx = (start + n) % all.length;
+        if (all[idx].textContent.trim().toLowerCase().startsWith(buffer)) { focusItem(idx); break; }
+      }
+    }
+  }, { signal });
+
+  list.addEventListener('click', (e) => {
+    const item = e.target.closest('[role="menuitem"]');
+    if (!item) return;
+    if (item.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+    root.dispatchEvent(new CustomEvent('pbgc:select', { bubbles: true, detail: { item, value: item.dataset.value ?? item.textContent.trim() } }));
+    close();
+    trigger.focus();
+  }, { signal });
+
+  root.addEventListener('focusout', (e) => {
+    if (e.relatedTarget && !root.contains(e.relatedTarget)) close();
+  }, { signal });
+
+  return { open, close, destroy: () => { close(); ac.abort(); } };
+}
+
+/* ---------- Tooltip (WCAG 1.4.13: dismissible with Escape, hoverable, persistent) ---------- */
+export function enhanceTooltip(host) {
+  const trigger = host.firstElementChild;
+  const tip = $(host, '[role="tooltip"]');
+  const ac = new AbortController();
+  const { signal } = ac;
+  let showTimer = 0;
+  let hideTimer = 0;
+  let stopDismiss = () => {};
+
+  const onKey = (e) => {
+    if (e.key === 'Escape' && isOpen(tip)) { e.preventDefault(); e.stopPropagation(); hide(); }
+  };
+  function show() {
+    clearTimeout(hideTimer);
+    if (isOpen(tip)) return;
+    tip.showPopover();
+    placeNear(trigger, tip, { prefer: 'top', align: 'center' });
+    document.addEventListener('keydown', onKey, true);
+    stopDismiss = dismissWhileOpen([host], hide);
+  }
+  function hide() {
+    clearTimeout(showTimer);
+    clearTimeout(hideTimer);
+    if (isOpen(tip)) tip.hidePopover();
+    delete tip.dataset.placed;
+    document.removeEventListener('keydown', onKey, true);
+    stopDismiss();
+  }
+  const scheduleShow = (delay) => { clearTimeout(hideTimer); clearTimeout(showTimer); showTimer = setTimeout(show, delay); };
+  const scheduleHide = () => { clearTimeout(showTimer); hideTimer = setTimeout(hide, 150); };
+
+  trigger.addEventListener('pointerenter', () => scheduleShow(400), { signal });
+  trigger.addEventListener('pointerleave', scheduleHide, { signal });
+  trigger.addEventListener('focus', show, { signal });
+  trigger.addEventListener('blur', hide, { signal });
+  tip.addEventListener('pointerenter', () => clearTimeout(hideTimer), { signal }); // hoverable
+  tip.addEventListener('pointerleave', scheduleHide, { signal });
+
+  return { show, hide, destroy: () => { hide(); ac.abort(); } };
+}
+
+/* ---------- Toggletip (click-to-reveal help; may contain links) ---------- */
+export function enhanceToggletip(host) {
+  const button = $(host, '.pbgc-toggletip__button');
+  const panel = $(host, '.pbgc-toggletip__panel');
+  const ac = new AbortController();
+  const { signal } = ac;
+  let stopDismiss = () => {};
+
+  const close = () => {
+    if (!isOpen(panel)) return;
+    panel.hidePopover();
+    delete panel.dataset.placed;
+    button.setAttribute('aria-expanded', 'false');
+    stopDismiss();
+  };
+  const open = () => {
+    if (isOpen(panel)) return;
+    panel.showPopover();
+    placeNear(button, panel, { prefer: 'bottom', align: 'start' });
+    button.setAttribute('aria-expanded', 'true');
+    stopDismiss = dismissWhileOpen([host], close);
+  };
+  button.addEventListener('click', () => (isOpen(panel) ? close() : open()), { signal });
+  host.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isOpen(panel)) { e.preventDefault(); e.stopPropagation(); close(); button.focus(); }
+  }, { signal });
+  host.addEventListener('focusout', (e) => {
+    if (e.relatedTarget && !host.contains(e.relatedTarget)) close();
+  }, { signal });
+
+  return { open, close, destroy: () => { close(); ac.abort(); } };
+}
+
+/* ---------- File picker (local only: files are read by the browser, never uploaded by this component) ---------- */
+const formatBytes = (n) => (n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1048576).toFixed(1)} MB`);
+
+export function enhanceFilePicker(root) {
+  const input = $(root, 'input[type="file"]');
+  const zone = $(root, '.pbgc-filepicker__zone');
+  const list = $(root, '[data-fp-list]');
+  const errors = $(root, '[data-fp-errors]');
+  const status = $(root, '[data-fp-status]');
+  const accept = (input.getAttribute('accept') || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+  const maxMb = Number(root.dataset.maxSizeMb) || Infinity;
+  const maxBytes = maxMb * 1024 * 1024;
+  const ac = new AbortController();
+  const { signal } = ac;
+  let files = [];
+
+  const accepted = (f) =>
+    !accept.length ||
+    accept.some((a) => (a.startsWith('.') ? f.name.toLowerCase().endsWith(a) : a.endsWith('/*') ? f.type.startsWith(a.slice(0, -1)) : f.type === a));
+  const keyOf = (f) => `${f.name}|${f.size}|${f.lastModified}`;
+  const sync = () => {
+    const dt = new DataTransfer();
+    files.forEach((f) => dt.items.add(f));
+    input.files = dt.files; // keeps a surrounding <form> submission in step with what the list shows
+  };
+  const render = (rejected) => {
+    list.replaceChildren();
+    list.hidden = files.length === 0;
+    files.forEach((f) => {
+      const li = document.createElement('li');
+      li.className = 'pbgc-filepicker__item';
+      const name = document.createElement('span');
+      name.className = 'pbgc-filepicker__name';
+      name.textContent = f.name; // textContent, never innerHTML: file names are untrusted
+      const size = document.createElement('span');
+      size.className = 'pbgc-filepicker__size';
+      size.textContent = formatBytes(f.size);
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'pbgc-button pbgc-button--secondary pbgc-filepicker__remove';
+      remove.dataset.key = keyOf(f);
+      remove.append('Remove ');
+      const sr = document.createElement('span');
+      sr.className = 'pbgc-sr-only';
+      sr.textContent = f.name;
+      remove.append(sr);
+      li.append(name, size, remove);
+      list.append(li);
+    });
+    errors.replaceChildren();
+    rejected.forEach((msg) => {
+      const p = document.createElement('p');
+      p.className = 'pbgc-filepicker__error';
+      p.innerHTML = iconSvg('error', 'pbgc-filepicker__error-icon');
+      const text = document.createElement('span');
+      text.textContent = `Error: ${msg}`;
+      p.append(text);
+      errors.append(p);
+    });
+  };
+  const announce = (rejected) => {
+    const n = files.length;
+    const parts = [`${n} ${n === 1 ? 'file' : 'files'} selected.`];
+    if (rejected.length) parts.push(`${rejected.length} ${rejected.length === 1 ? 'file was' : 'files were'} not accepted.`);
+    status.textContent = parts.join(' ');
+  };
+  const emit = (rejected) =>
+    root.dispatchEvent(new CustomEvent('pbgc:files', { bubbles: true, detail: { files: files.slice(), rejected } }));
+
+  input.addEventListener('change', () => {
+    const incoming = Array.from(input.files);
+    zone.classList.remove('is-dragover');
+    if (!incoming.length) { sync(); return; } // cancelled picker: keep the current selection
+    const rejected = [];
+    const next = input.multiple ? files.slice() : [];
+    for (const f of incoming) {
+      if (!accepted(f)) rejected.push(`${f.name} is not an accepted file type. Accepted: ${accept.join(', ')}.`);
+      else if (f.size > maxBytes) rejected.push(`${f.name} is ${formatBytes(f.size)}, which is over the ${maxMb} MB limit.`);
+      else if (!next.some((x) => keyOf(x) === keyOf(f))) next.push(f);
+    }
+    if (!input.multiple && !next.length && files.length) { /* single mode: a rejected pick keeps the previous file */ } else files = next;
+    sync();
+    render(rejected);
+    announce(rejected);
+    emit(rejected);
+  }, { signal });
+
+  list.addEventListener('click', (e) => {
+    const btn = e.target.closest('.pbgc-filepicker__remove');
+    if (!btn) return;
+    const buttons = $$(list, '.pbgc-filepicker__remove');
+    const at = buttons.indexOf(btn);
+    files = files.filter((f) => keyOf(f) !== btn.dataset.key);
+    sync();
+    render([]);
+    announce([]);
+    emit([]);
+    // Never strand focus: go to the next Remove button, else the previous, else the file input.
+    const remaining = $$(list, '.pbgc-filepicker__remove');
+    (remaining[at] || remaining[at - 1] || input).focus();
+  }, { signal });
+
+  ['dragenter', 'dragover'].forEach((t) => zone.addEventListener(t, () => zone.classList.add('is-dragover'), { signal }));
+  ['dragleave', 'drop'].forEach((t) => zone.addEventListener(t, () => zone.classList.remove('is-dragover'), { signal }));
+
+  return { getFiles: () => files.slice(), destroy: () => ac.abort() };
+}
+
+/* ---------- Carousel (scroll-snap, NO autoplay; WCAG 2.2.2) ---------- */
+export function enhanceCarousel(root) {
+  const track = $(root, '.pbgc-carousel__track');
+  const slides = $$(root, '.pbgc-carousel__slide');
+  const prev = $(root, '[data-carousel-prev]');
+  const next = $(root, '[data-carousel-next]');
+  const status = $(root, '[data-carousel-status]');
+  const ac = new AbortController();
+  const { signal } = ac;
+  let idx = 0;
+  let timer = 0;
+
+  const update = () => {
+    slides.forEach((s, i) => { s.inert = i !== idx; }); // off-screen slides leave the tab order and the reading order
+    prev.setAttribute('aria-disabled', String(idx === 0)); // aria-disabled, not disabled: focus is never stranded on a vanished button
+    next.setAttribute('aria-disabled', String(idx === slides.length - 1));
+    const text = `Slide ${idx + 1} of ${slides.length}`;
+    if (status.textContent !== text) status.textContent = text;
+  };
+  const goTo = (i) => {
+    idx = Math.max(0, Math.min(slides.length - 1, i));
+    track.scrollTo({ left: idx * track.clientWidth, behavior: reducedMotion() ? 'auto' : 'smooth' });
+    update();
+  };
+  prev.addEventListener('click', () => { if (prev.getAttribute('aria-disabled') !== 'true') goTo(idx - 1); }, { signal });
+  next.addEventListener('click', () => { if (next.getAttribute('aria-disabled') !== 'true') goTo(idx + 1); }, { signal });
+  track.addEventListener('scroll', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      const i = Math.round(track.scrollLeft / (track.clientWidth || 1));
+      if (i !== idx) { idx = i; update(); }
+    }, 100);
+  }, { signal, passive: true });
+  update();
+  return { goTo, destroy: () => { clearTimeout(timer); ac.abort(); } };
+}
+
+/* ---------- Toasts ----------
+   Two PERSISTENT live regions (created up front, because screen readers only announce changes to a region
+   that already exists): polite for info/success/warning, assertive (role=alert) for errors.
+   Info and success auto-dismiss after 10 s; warning and error stay until dismissed (WCAG 2.2.1).
+   Hover or focus pauses the timer. */
+const toastState = { root: null, polite: null, assertive: null, lastFocus: null };
+const VARIANT_LABEL = { info: 'Information', success: 'Success', warning: 'Warning', error: 'Error' };
+
+export function initToasts() {
+  if (toastState.root && document.body.contains(toastState.root)) return;
+  const root = document.createElement('section');
+  root.className = 'pbgc-toast-region';
+  root.setAttribute('aria-label', 'Notifications');
+  const polite = document.createElement('div');
+  polite.className = 'pbgc-toast-region__live';
+  polite.setAttribute('role', 'status');
+  const assertive = document.createElement('div');
+  assertive.className = 'pbgc-toast-region__live';
+  assertive.setAttribute('role', 'alert');
+  root.append(polite, assertive);
+  document.body.append(root);
+  root.addEventListener('focusin', (e) => {
+    if (e.relatedTarget && !root.contains(e.relatedTarget)) toastState.lastFocus = e.relatedTarget;
+  });
+  root.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { const t = e.target.closest('.pbgc-toast'); if (t) dismissToast(t.dataset.toastId); }
+  });
+  Object.assign(toastState, { root, polite, assertive });
+}
+
+export function dismissToast(id) {
+  if (!toastState.root) return;
+  const el = toastState.root.querySelector(`[data-toast-id="${id}"]`);
+  if (!el) return;
+  clearTimeout(Number(el.dataset.timer));
+  if (el.contains(document.activeElement)) {
+    // Never strand focus when the focused toast disappears.
+    const others = $$(toastState.root, '.pbgc-toast').filter((t) => t !== el);
+    const target = others[0]?.querySelector('.pbgc-toast__dismiss') ?? (toastState.lastFocus?.isConnected ? toastState.lastFocus : null);
+    el.remove();
+    target?.focus();
+  } else {
+    el.remove();
+  }
+}
+
+export function showToast({ variant = 'info', title, message = '', duration } = {}) {
+  initToasts();
+  const id = nextId('pbgc-toast');
+  const auto = duration ?? (variant === 'info' || variant === 'success' ? 10000 : 0);
+  const el = document.createElement('div');
+  el.className = `pbgc-toast pbgc-alert pbgc-alert--${variant}`;
+  el.dataset.toastId = id;
+  el.innerHTML = iconSvg(variant, 'pbgc-alert__icon');
+  const body = document.createElement('div');
+  body.className = 'pbgc-alert__body';
+  const strong = document.createElement('strong');
+  strong.className = 'pbgc-alert__title';
+  const prefix = document.createElement('span');
+  prefix.className = 'pbgc-sr-only';
+  prefix.textContent = `${VARIANT_LABEL[variant]}: `; // the status word is text, not just color and shape
+  strong.append(prefix, document.createTextNode(title));
+  body.append(strong);
+  if (message) { const p = document.createElement('p'); p.textContent = message; body.append(p); }
+  const dismiss = document.createElement('button');
+  dismiss.type = 'button';
+  dismiss.className = 'pbgc-toast__dismiss';
+  dismiss.innerHTML = '<span aria-hidden="true">×</span>';
+  const sr = document.createElement('span');
+  sr.className = 'pbgc-sr-only';
+  sr.textContent = `Dismiss notification: ${title}`;
+  dismiss.append(sr);
+  dismiss.addEventListener('click', () => dismissToast(id));
+  el.append(body, dismiss);
+
+  let remaining = auto;
+  let started = 0;
+  const start = () => {
+    if (!auto || remaining <= 0 || el.dataset.timer) return;
+    started = Date.now();
+    el.dataset.timer = String(setTimeout(() => dismissToast(id), remaining));
+  };
+  const pause = () => {
+    if (!el.dataset.timer) return;
+    clearTimeout(Number(el.dataset.timer));
+    delete el.dataset.timer;
+    remaining -= Date.now() - started;
+  };
+  el.addEventListener('pointerenter', pause);
+  el.addEventListener('pointerleave', () => { if (!el.contains(document.activeElement)) start(); });
+  el.addEventListener('focusin', pause);
+  el.addEventListener('focusout', (e) => { if (!el.contains(e.relatedTarget)) start(); });
+
+  (variant === 'error' ? toastState.assertive : toastState.polite).append(el);
+  start();
+  return id;
+}
+export const clearToasts = () => toastState.root && $$(toastState.root, '.pbgc-toast').forEach((t) => dismissToast(t.dataset.toastId));
+export const toast = { show: showToast, dismiss: dismissToast, clear: clearToasts };
+
+/* ---------- Auto-wiring for plain-HTML pages ---------- */
+const ENHANCERS = [
+  ['[data-pbgc-dialog]', enhanceDialog],
+  ['[data-pbgc-menu]', enhanceMenu],
+  ['[data-pbgc-tooltip]', enhanceTooltip],
+  ['[data-pbgc-toggletip]', enhanceToggletip],
+  ['[data-pbgc-filepicker]', enhanceFilePicker],
+  ['[data-pbgc-carousel]', enhanceCarousel],
+];
+
+/** Enhance everything under `root` and wire [data-pbgc-open="dialog-id"] openers. Returns { destroy }. */
+export function init(root = document) {
+  const handles = [];
+  for (const [sel, fn] of ENHANCERS) $$(root, sel).forEach((el) => handles.push(fn(el)));
+  initToasts();
+  const ac = new AbortController();
+  root.addEventListener('click', (e) => {
+    const opener = e.target.closest('[data-pbgc-open]');
+    if (opener) { const d = document.getElementById(opener.dataset.pbgcOpen); if (d) openDialog(d); }
+  }, { signal: ac.signal });
+  return { destroy: () => { ac.abort(); handles.forEach((h) => h.destroy()); } };
+}
+
+export { init as default };

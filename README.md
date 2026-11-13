@@ -47,11 +47,20 @@ npm run build-storybook    # static site in storybook-static/
 npm run tokens:check       # validate every color pair (no files written)
 npm run test:a11y          # axe over every story (build Storybook first; needs Chrome/Edge)
 npm run reference          # rebuild the single-file reference
+npm run vanilla            # build dist/pbgc.js + dist/pbgc.css (framework-free)
+npm run test:reference     # reference page: axe at 1200px and 375px, both themes, no network
+npm run test:behavior      # real keystrokes on the interactive components, React and vanilla builds
 ```
 
-Full pre-release check: `npm run tokens:check && npm run build-storybook && npm run test:a11y`.
+Full pre-release check: `npm test` (tokens, vanilla build, reference build, Storybook build, axe on every story, reference-page check, behavior check).
 
 `test:a11y` drives a locally installed Chrome, Edge, or Chromium (set `CHROME_PATH` to override). Nothing is downloaded.
+
+## Use it without React (single-file HTML apps)
+
+Copy two files into your app: `dist/pbgc.css` (tokens + components) and `dist/pbgc.js` (behavior). Both are plain, dependency-free, and make no network calls. Write the markup shown in `reference/pbgc-design-system-reference.html` (it has a working example of every component) and call `PBGC.init()` once. Notifications need no markup: `PBGC.toast.show({ variant: 'success', title: 'Saved' })`. To inline everything into one `.html` file, paste the CSS into a `<style>` and the JS into a `<script>`.
+
+Browser baseline: the overlay components use `<dialog>`, the Popover API and `inert` (Chrome/Edge 114+, Firefox 125+, Safari 17+). Confirm this against PBGC's supported browsers (`OPEN-QUESTIONS.md` Q17).
 
 ## Add the logo (required, one-time)
 
@@ -93,11 +102,14 @@ Do not push logo artwork to a public repository until COLA confirms it is permit
 
 | Check | Status |
 |---|---|
-| 59 color-pair contrast checks, light + dark | Pass (computed, `tokens/contrast-report.md`) |
+| 65 color-pair contrast checks, light + dark | Pass (computed, `tokens/contrast-report.md`) |
 | Storybook builds | Pass |
-| axe-core on 49 stories x 2 themes (98 runs) | Pass, 0 violations |
+| axe-core on 70 stories x 2 themes (140 runs), including open dialog, menu, tooltip and toggletip | Pass, 0 violations |
+| Keystroke and pointer behavior of the 8 interactive components, React build and vanilla build (15 runs) | Pass. Negative control: two deliberately broken behaviors were both caught |
 | axe-core on the reference page at 1200px and 375px, both themes | Pass, 0 violations, no horizontal scroll, 0 external requests |
 | Negative control (axe flags known-bad contrast and alt text here) | Pass |
+| Carousel pan/swipe on a touch device | **Not done** (only button and keyboard paths are tested) |
+| Tooltip, menu and toast placement in a printed or zoomed (400%) layout | **Not done** |
 | Keyboard and screen-reader testing (NVDA, JAWS, VoiceOver) | **Not done** |
 | Windows High Contrast visual check | **Not done** |
 | Logo variant mapping confirmed against the guide | **Not done** |
