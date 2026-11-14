@@ -59,3 +59,31 @@ export const piiDemos = `
       <p class="pbgc-small pbgc-muted">Not dismissible and not sticky. Replace the wording with the exact text your application must show.</p>
     </div>
 `;
+
+export const tabsDemos = `
+    <h3 style="margin-top:2rem">Tabs</h3>
+    <div class="ref-demo" id="demo-tabs">
+      <h4>Automatic activation</h4>
+      <div class="pbgc-tabs" data-pbgc-tabs data-activation="auto">
+        <div class="pbgc-tabs__list" role="tablist" aria-label="Sample sections">
+          <button type="button" role="tab" class="pbgc-tabs__tab" id="ta-t1" aria-controls="ta-p1" aria-selected="true" tabindex="0">Summary</button>
+          <button type="button" role="tab" class="pbgc-tabs__tab" id="ta-t2" aria-controls="ta-p2" aria-selected="false" tabindex="-1">Details</button>
+          <button type="button" role="tab" class="pbgc-tabs__tab" id="ta-t3" aria-controls="ta-p3" aria-selected="false" tabindex="-1">History</button>
+        </div>
+        <div class="pbgc-tabs__panel" role="tabpanel" id="ta-p1" aria-labelledby="ta-t1"><p>Sample summary text.</p></div>
+        <div class="pbgc-tabs__panel" role="tabpanel" id="ta-p2" aria-labelledby="ta-t2" hidden><p>Sample details.</p><p><a href="#sample">A sample link</a></p></div>
+        <div class="pbgc-tabs__panel" role="tabpanel" id="ta-p3" aria-labelledby="ta-t3" hidden><p>Sample history text.</p></div>
+      </div>
+      <h4 style="margin-top:1.5rem">Manual activation</h4>
+      <div class="pbgc-tabs" data-pbgc-tabs data-activation="manual">
+        <div class="pbgc-tabs__list" role="tablist" aria-label="Sample sections, manual">
+          <button type="button" role="tab" class="pbgc-tabs__tab" id="tm-t1" aria-controls="tm-p1" aria-selected="true" tabindex="0">Summary</button>
+          <button type="button" role="tab" class="pbgc-tabs__tab" id="tm-t2" aria-controls="tm-p2" aria-selected="false" tabindex="-1">Details</button>
+          <button type="button" role="tab" class="pbgc-tabs__tab" id="tm-t3" aria-controls="tm-p3" aria-selected="false" tabindex="-1">History</button>
+        </div>
+        <div class="pbgc-tabs__panel" role="tabpanel" id="tm-p1" aria-labelledby="tm-t1"><p>Sample summary text.</p></div>
+        <div class="pbgc-tabs__panel" role="tabpanel" id="tm-p2" aria-labelledby="tm-t2" hidden><p>Sample details.</p><p><a href="#sample">A sample link</a></p></div>
+        <div class="pbgc-tabs__panel" role="tabpanel" id="tm-p3" aria-labelledby="tm-t3" hidden><p>Sample history text.</p></div>
+      </div>
+    </div>
+`;

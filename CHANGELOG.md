@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.6.0 (2026-11-14)
+
+### Added
+- **Tabs**, React and framework-free, following the WAI-ARIA Authoring Practices tabs pattern: `tablist`/`tab`/`tabpanel` wired with `aria-controls` and `aria-labelledby`; roving tabindex (the selected tab is the only Tab stop); Left/Right move between tabs and wrap; Home/End jump; Tab moves into the panel. Automatic activation by default; `activation="manual"` (Enter or Space selects) for slow or side-effecting panels. A panel with no focusable content becomes focusable so it can be scrolled; one with a link does not add a second stop.
+- Tabs wrap onto more lines at narrow widths instead of scrolling sideways. Selected tab: thick bar plus bold text. No disabled tabs, by design.
+- `enhanceTabs` exported (also on `window.PBGC`); fires `pbgc:tab { index, id }`.
+- `tabs` scenario in the behavior gate (26 runs, was 24), both builds. Verified to fail when the roving tabindex, the wrap, the manual-mode rule, or the panel Tab-stop rule is broken (four negative controls).
+
 ## 1.5.0 (2026-11-14)
 
 ### Added

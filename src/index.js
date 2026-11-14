@@ -29,4 +29,5 @@ export { useToast } from './components/Toast/Toast.jsx';
 export { NumericField } from './components/NumericField/NumericField.jsx';
 export { Textarea } from './components/Textarea/Textarea.jsx';
 export { Switch } from './components/Switch/Switch.jsx';
+export { Tabs } from './components/Tabs/Tabs.jsx';
 export { SensitiveDataBanner } from './components/SensitiveDataBanner/SensitiveDataBanner.jsx';
