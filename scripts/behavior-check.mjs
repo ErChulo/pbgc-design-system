@@ -568,6 +568,55 @@ const SCENARIOS = {
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'no horizontal scroll at 375px');
     await axeOn(page, '.pbgc-stepper', 'stepper at 375px');
   },
+  async deflist(page) {
+    const dl = page.locator('dl.pbgc-deflist').first();
+    const rows = dl.locator(':scope > div');
+    assert((await rows.count()) >= 3, 'a dl of div groups');
+    assert(await rows.evaluateAll((rs) => rs.every((r) => r.children.length === 2 && r.children[0].tagName === 'DT' && r.children[1].tagName === 'DD')), 'every group is one dt followed by one dd');
+    assert(await dl.locator('dd').evaluateAll((ds) => ds.every((d) => d.textContent.trim().length > 0)), 'no value is ever blank');
+    const emptyTexts = await dl.locator('.pbgc-deflist__value--empty').allTextContents();
+    assert(emptyTexts.length >= 1 && emptyTexts.every((t) => t === 'Not provided'), `a missing value reads "Not provided" (got ${JSON.stringify(emptyTexts)})`);
+    // Wide: label beside value. Narrow: label above value.
+    const pos = () => rows.first().evaluate((r) => { const a = r.children[0].getBoundingClientRect(), b = r.children[1].getBoundingClientRect(); return { sameLine: Math.abs(a.top - b.top) < 4, below: b.top >= a.bottom - 1 }; });
+    await page.setViewportSize({ width: 1200, height: 900 });
+    assert((await pos()).sameLine, 'wide: label and value share a line');
+    await axeOn(page, 'dl.pbgc-deflist', 'description list');
+    await page.setViewportSize({ width: 375, height: 800 });
+    await page.waitForTimeout(150);
+    assert((await pos()).below, 'narrow: value sits below its label');
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'no horizontal scroll at 375px');
+  },
+
+  async emptystate(page) {
+    const box = page.locator('.pbgc-empty').first();
+    assert((await box.locator('h2, h3, h4, h5, h6').count()) === 1, 'it has one real heading');
+    assert((await box.locator('[role=alert], [role=status], [aria-live]').count()) === 0 && (await attr(page, '.pbgc-empty', 'role')) === null, 'it is not a live region');
+    assert((await box.locator('button, a[href]').count()) === 1, 'it offers exactly one next step');
+    assert((await box.locator('img, svg').count()) === 0, 'no decorative illustration');
+    const h = await box.locator('button, a[href]').first().evaluate((el) => el.getBoundingClientRect().height);
+    assert(h >= 44, `the action is at least 44px tall (got ${h})`);
+    await box.locator('button, a[href]').first().focus();
+    assert(await page.evaluate(() => document.activeElement.closest('.pbgc-empty') !== null), 'the action is keyboard focusable');
+    await axeOn(page, '.pbgc-empty', 'empty state');
+  },
+
+  async stats(page) {
+    const dl = page.locator('dl.pbgc-stats').first();
+    const tiles = dl.locator('.pbgc-stat');
+    assert((await tiles.count()) >= 2, 'two or more tiles');
+    assert(await tiles.evaluateAll((ts) => ts.every((t) => t.children[0].tagName === 'DT' && t.children[1].tagName === 'DD')), 'each tile is a label (dt) followed by its figure (dd)');
+    const sizes = await tiles.first().evaluate((t) => [parseFloat(getComputedStyle(t.querySelector('.pbgc-stat__label')).fontSize), parseFloat(getComputedStyle(t.querySelector('.pbgc-stat__value')).fontSize), getComputedStyle(t.querySelector('.pbgc-stat__value')).fontVariantNumeric]);
+    assert(sizes[1] > sizes[0] * 1.5, `the figure is much larger than its label (${sizes[1]}px vs ${sizes[0]}px)`);
+    assert(sizes[2].includes('tabular-nums'), 'figures use tabular numerals');
+    assert(await dl.locator('svg, img, [class*=trend], [class*=arrow]').count() === 0, 'no trend arrows or icons: change is stated in words');
+    await axeOn(page, 'dl.pbgc-stats', 'stat tiles');
+    await page.setViewportSize({ width: 375, height: 800 });
+    await page.waitForTimeout(150);
+    const lefts = await tiles.evaluateAll((ts) => ts.map((t) => Math.round(t.getBoundingClientRect().left)));
+    assert(new Set(lefts).size === 1, `at 375px the tiles stack in one column (lefts ${JSON.stringify(lefts)})`);
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'no horizontal scroll at 375px');
+    await axeOn(page, 'dl.pbgc-stats', 'stat tiles at 375px');
+  },
 };
 
 // Storybook story id (React build) and whether the reference page (vanilla build) has the scenario too.
@@ -586,8 +635,11 @@ const STORIES = {
   pii: 'molecules-sensitivedatabanner--default',
   tabs: 'molecules-tabs--default',
   stepper: 'molecules-stepper--default',
+  deflist: 'molecules-descriptionlist--default',
+  emptystate: 'molecules-emptystate--nothing-yet',
+  stats: 'molecules-stattiles--default',
 };
-const REFERENCE = new Set(['menu', 'dialog', 'tooltip', 'toggletip', 'filepicker', 'carousel', 'toast', 'numeric', 'textarea', 'switch', 'pii', 'tabs', 'stepper', 'nopopover']);
+const REFERENCE = new Set(['menu', 'dialog', 'tooltip', 'toggletip', 'filepicker', 'carousel', 'toast', 'numeric', 'textarea', 'switch', 'pii', 'tabs', 'stepper', 'deflist', 'emptystate', 'stats', 'nopopover']);
 const REFERENCE_ONLY = new Set(['nopopover']); // simulates an old browser; only the framework-free page is used // confirm is React-only sugar over <form method=dialog>
 
 let total = 0;

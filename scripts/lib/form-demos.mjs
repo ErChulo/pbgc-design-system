@@ -103,3 +103,31 @@ export const stepperDemos = `
       <p class="pbgc-small pbgc-muted">Shows progress; it is not a control. Completed steps may link back. Your app moves focus to the new step's heading when the step changes.</p>
     </div>
 `;
+
+export const displayDemos = `
+    <h3 style="margin-top:2rem">Description list</h3>
+    <div class="ref-demo" id="demo-deflist">
+      <dl class="pbgc-deflist">
+        <div class="pbgc-deflist__row"><dt class="pbgc-deflist__term">Sample participant</dt><dd class="pbgc-deflist__value">Pat Example</dd></div>
+        <div class="pbgc-deflist__row"><dt class="pbgc-deflist__term">Sample date of birth</dt><dd class="pbgc-deflist__value">01/15/1960</dd></div>
+        <div class="pbgc-deflist__row"><dt class="pbgc-deflist__term">Sample monthly benefit</dt><dd class="pbgc-deflist__value">$1,234.50</dd></div>
+        <div class="pbgc-deflist__row"><dt class="pbgc-deflist__term">Sample beneficiary</dt><dd class="pbgc-deflist__value pbgc-deflist__value--empty">Not provided</dd></div>
+      </dl>
+    </div>
+    <h3 style="margin-top:2rem">Empty state</h3>
+    <div class="ref-demo" id="demo-emptystate">
+      <div class="pbgc-empty">
+        <h4 class="pbgc-empty__title">No sample cases yet</h4>
+        <p class="pbgc-empty__text">Cases you create appear here.</p>
+        <div class="pbgc-empty__action"><button type="button" class="pbgc-button pbgc-button--primary">Create a sample case</button></div>
+      </div>
+    </div>
+    <h3 style="margin-top:2rem">Stat tiles</h3>
+    <div class="ref-demo" id="demo-stats">
+      <dl class="pbgc-stats">
+        <div class="pbgc-stat"><dt class="pbgc-stat__label">Sample open cases</dt><dd class="pbgc-stat__value">42</dd><dd class="pbgc-stat__context">Up 3 from last month</dd></div>
+        <div class="pbgc-stat"><dt class="pbgc-stat__label">Sample average days to close</dt><dd class="pbgc-stat__value">12.5</dd><dd class="pbgc-stat__context">As of 11/14/2026</dd></div>
+        <div class="pbgc-stat"><dt class="pbgc-stat__label">Sample total benefits</dt><dd class="pbgc-stat__value">$1,234,567.89</dd><dd class="pbgc-stat__context">As of 11/14/2026</dd></div>
+      </dl>
+    </div>
+`;

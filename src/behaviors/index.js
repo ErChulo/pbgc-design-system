@@ -1,4 +1,4 @@
-/* PBGC behaviors v1.7.0
+/* PBGC behaviors v1.8.0
    Framework-free behavior for the interactive components. This file is the ONLY implementation of that
    behavior: the React components render the same markup and call these functions, and the single-file
    reference page inlines this file as-is. One implementation means the two builds cannot drift apart.
