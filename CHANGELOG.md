@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.3.0 (2026-11-14)
+
+### Added
+- **NumericField** (integer, decimal, currency, percent), React and framework-free. Built for amounts and rates that people rely on:
+  - never silently changes what was typed: too many decimal places is an error, not a rounding;
+  - digits handled as a string, at most 15, so `value` is exact in a double (`valueText` is the canonical decimal string);
+  - strict thousands grouping (`1,234` accepted, `12,34` rejected); pasted `$1,234.50` and `5.25%` work;
+  - a percent is in percent units (5.25 gives 5.25);
+  - errors appear when the field is left and clear as soon as the mistake is fixed; `validate()` for submit; an `error` prop for outside rules;
+  - `$` and `%` are shown beside the input but spoken through the field's description (`in dollars`, `percent`).
+- `parseNumber`, `formatNumber` and `numericOptions` are exported (also on `window.PBGC`), so apps can reuse the exact rules.
+- `scripts/numeric-check.mjs` (`npm run test:numeric`): 6,074 checks including a property test that 15-digit values stay exact. Verified to fail when the decimals rule or the digit limit is broken.
+- `numeric` scenario in the behavior gate (18 runs, was 16), run against both builds; verified to fail when errors stop clearing while typing.
+
+### Changed
+- `.pbgc-field__error[hidden]` now hides (a class rule had been overriding the `hidden` attribute).
+- The field-error icon helper in the core takes a size.
+
 ## 1.2.2 (2026-11-13)
 
 No open question is blocked any more. The six that were waiting on PBGC facts are now decisions or an imputed value, so no component depends on an unanswered question and none was removed.
