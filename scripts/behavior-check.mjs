@@ -301,6 +301,66 @@ const SCENARIOS = {
     assert(await page.evaluate(() => document.querySelectorAll('.pbgc-toast').length === 0), 'Clear all removes every toast');
   },
 
+  async numeric(page) {
+    const sel = '[data-pbgc-numeric] input';
+    const input = page.locator(sel).first();
+    const val = () => input.inputValue();
+    const errText = () => page.evaluate(() => { const e = document.querySelector('[data-nf-error]'); return e.hidden ? '' : e.textContent; });
+    const typeThenLeave = async (text) => { await input.focus(); await input.fill(text); await page.keyboard.press('Tab'); };
+    await page.evaluate(() => { window.__nv = null; document.querySelector('[data-pbgc-numeric]').addEventListener('pbgc:value', (e) => { window.__nv = e.detail; }); });
+
+    // Typing never rewrites the text, and no error shows before the first blur.
+    await input.focus();
+    await page.keyboard.type('1234.5');
+    assert((await val()) === '1234.5', 'text is not rewritten while the person types');
+    assert((await errText()) === '', 'no error before the field has been left once');
+    await page.keyboard.press('Tab');
+    assert((await val()) === '1,234.50', 'on leaving: grouped with commas and padded to cents');
+    const d = await page.evaluate(() => window.__nv);
+    assert(d.valid && d.value === 1234.5 && d.valueText === '1234.5', `pbgc:value reports the number (got ${JSON.stringify(d)})`);
+
+    // Malformed input: text is kept as typed, and the error is announced as text on the field.
+    await typeThenLeave('12,34');
+    assert((await errText()) === 'Error: Enter a number such as 1,234.56.', `malformed grouping is an error (got "${await errText()}")`);
+    assert((await val()) === '12,34', 'the typed text is left exactly as typed');
+    assert((await attr(page, sel, 'aria-invalid')) === 'true', 'aria-invalid is set');
+    assert((await attr(page, sel, 'aria-describedby')).includes('-error'), 'the error is part of the description');
+    await axeOn(page, '[data-pbgc-numeric]', 'numeric field in its error state');
+
+    // After the first blur, a fixed mistake clears at once (no need to leave the field again).
+    await input.focus();
+    await input.fill('1234');
+    assert((await errText()) === '' && (await attr(page, sel, 'aria-invalid')) === null, 'error clears as soon as the mistake is fixed');
+
+    // Never silently rounds.
+    await typeThenLeave('1.005');
+    assert((await errText()) === 'Error: Enter no more than 2 decimal places.', 'extra decimal places are an error');
+    assert((await val()) === '1.005', 'it did not round or truncate what was typed');
+    await typeThenLeave('-5');
+    assert((await errText()) === 'Error: Enter a number that is not negative.', 'negative is refused when not allowed');
+    await typeThenLeave('1234567890123456');
+    assert((await errText()) === 'Error: Enter no more than 15 digits.', '16 digits are refused (the number would not be exact)');
+
+    // Pasted values with symbols work and are formatted.
+    await typeThenLeave('$1,234,567.8');
+    assert((await errText()) === '' && (await val()) === '1,234,567.80', `a pasted "$1,234,567.8" becomes 1,234,567.80 (got "${await val()}")`);
+    assert((await page.evaluate(() => window.__nv)).valueText === '1234567.8', 'valueText is the canonical decimal string');
+
+    // Required.
+    await typeThenLeave('');
+    assert((await errText()) === 'Error: Enter a value for Sample monthly benefit.', `required names the field (got "${await errText()}")`);
+
+    // Percent range (the reference page also has a percent field).
+    if ((await page.locator(sel).count()) > 1) {
+      const pct = page.locator(sel).nth(1);
+      await pct.focus(); await pct.fill('100.0001'); await page.keyboard.press('Tab');
+      const e2 = await page.evaluate(() => document.querySelectorAll('[data-nf-error]')[1].textContent);
+      assert(e2 === 'Error: Enter a number between 0% and 100%.', `percent range error names the limits (got "${e2}")`);
+      await pct.focus(); await pct.fill('5.25%'); await page.keyboard.press('Tab');
+      assert((await pct.inputValue()) === '5.25', 'a typed trailing % is accepted and removed (the % is shown beside the field)');
+    }
+  },
+
   // A browser without the Popover API (Firefox ESR 115, Edge/Chrome < 114, Safari < 17) must DEGRADE, not break.
   async nopopover(page) {
     const vis = (sel) => page.evaluate((s) => {
@@ -350,8 +410,9 @@ const STORIES = {
   filepicker: 'molecules-filepicker--default',
   carousel: 'organisms-carousel--default',
   toast: 'organisms-toast--playground',
+  numeric: 'molecules-numericfield--currency',
 };
-const REFERENCE = new Set(['menu', 'dialog', 'tooltip', 'toggletip', 'filepicker', 'carousel', 'toast', 'nopopover']);
+const REFERENCE = new Set(['menu', 'dialog', 'tooltip', 'toggletip', 'filepicker', 'carousel', 'toast', 'numeric', 'nopopover']);
 const REFERENCE_ONLY = new Set(['nopopover']); // simulates an old browser; only the framework-free page is used // confirm is React-only sugar over <form method=dialog>
 
 let total = 0;

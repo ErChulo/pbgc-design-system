@@ -182,7 +182,8 @@ The v1.0.0 mapping "desktop = Word interior-page template" is withdrawn: the two
 | Carousel | Organism | Built (v1.2) | No autoplay; Previous/Next are `aria-disabled` (focus never stranded); off-screen slides are `inert`; "Slide n of N" status. Prefer Tabs or a Stepper for sequences |
 | Toast (`useToast`, `PBGC.toast`) | Organism | Built (v1.2) | Two persistent live regions (polite; assertive for errors); info/success auto-dismiss at 10 s, warning/error persist; hover or focus pauses; status word is text; Escape and a Dismiss button |
 | Sidebar, NavGroup, date input | | Backlog | Native-element first; see `OPEN-QUESTIONS.md` Q16 |
-| Tabs, charts, Stepper, numeric field | | Backlog | Custom widgets: full keyboard model required before building (see §8) |
+| NumericField (integer, decimal, currency, percent) | Molecule | Built (v1.3) | Text input with a decimal keypad, never `type=number`. Never silently rounds (too many decimals is an error); digits handled as a string, at most 15 so the value is exact; strict comma grouping; `$` and `%` shown beside the field and spoken in its description; errors appear on leaving the field and clear as soon as the mistake is fixed. Percent is in percent units. Not for IDs, phone numbers or ZIP codes |
+| Tabs, charts, Stepper | | Backlog | Custom widgets: full keyboard model required before building (see §8) |
 
 Naming note: v1.0.0 mixed up layers (Input as a molecule, Alert as an organism). Layer here means: **atom** = single element; **molecule** = a small group working as one unit; **organism** = a self-contained section.
 
