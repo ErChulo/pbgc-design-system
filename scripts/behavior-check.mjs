@@ -476,6 +476,62 @@ const SCENARIOS = {
     await page.emulateMedia({ media: 'screen', forcedColors: 'none' });
     await axeOn(page, '.pbgc-pii', 'sensitive data banner');
   },
+  async tabs(page) {
+    const auto = page.locator('[data-pbgc-tabs][data-activation=auto]').first();
+    const man = page.locator('[data-pbgc-tabs][data-activation=manual]').first();
+    const tabsOf = (set) => set.locator('[role=tab]');
+    const sel = (set) => set.evaluate((el) => Array.from(el.querySelectorAll('[role=tab]')).map((t) => t.getAttribute('aria-selected') === 'true' ? 1 : 0).join(''));
+    const stops = (set) => set.evaluate((el) => Array.from(el.querySelectorAll('[role=tab]')).filter((t) => t.tabIndex === 0).length);
+    const shown = (set) => set.evaluate((el) => Array.from(el.querySelectorAll('[role=tabpanel]')).map((p) => (p.hidden ? 0 : 1)).join(''));
+    const focusedIdx = (set) => set.evaluate((el) => Array.from(el.querySelectorAll('[role=tab]')).indexOf(document.activeElement));
+
+    // Roles and wiring.
+    assert(await auto.locator('[role=tablist][aria-label]').count() === 1, 'tablist has an accessible name');
+    assert(await auto.evaluate((el) => Array.from(el.querySelectorAll('[role=tab]')).every((t) => document.getElementById(t.getAttribute('aria-controls'))?.getAttribute('aria-labelledby') === t.id)), 'every tab and panel point at each other');
+    assert((await stops(auto)) === 1 && (await sel(auto)) === '100' && (await shown(auto)) === '100', 'one tab in the Tab order, first selected, only its panel shown');
+
+    // Automatic: arrows move focus AND selection, wrap, Home/End.
+    await tabsOf(auto).nth(0).focus();
+    await page.keyboard.press('ArrowRight');
+    assert((await focusedIdx(auto)) === 1 && (await sel(auto)) === '010' && (await shown(auto)) === '010', 'ArrowRight moves focus and selects (automatic)');
+    await page.keyboard.press('End');
+    assert((await focusedIdx(auto)) === 2 && (await sel(auto)) === '001', 'End goes to the last tab');
+    await page.keyboard.press('ArrowRight');
+    assert((await focusedIdx(auto)) === 0 && (await sel(auto)) === '100', 'ArrowRight wraps from last to first');
+    await page.keyboard.press('ArrowLeft');
+    assert((await focusedIdx(auto)) === 2, 'ArrowLeft wraps from first to last');
+    await page.keyboard.press('Home');
+    assert((await focusedIdx(auto)) === 0 && (await stops(auto)) === 1, 'Home goes to the first tab; still exactly one Tab stop');
+
+    // Tab leaves the tab list and lands in the panel (a panel with no focusable content is itself focusable), not the next tab.
+    await page.keyboard.press('Tab');
+    assert(await page.evaluate(() => document.activeElement?.getAttribute('role') === 'tabpanel'), 'Tab moves from the tab list into the panel');
+    await page.keyboard.press('Shift+Tab');
+    assert((await focusedIdx(auto)) === 0, 'Shift+Tab returns to the selected tab');
+    // A panel with a link: Tab goes to the link, not to a tabindex=0 panel.
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('Tab');
+    assert(await page.evaluate(() => document.activeElement?.tagName === 'A'), 'a panel with focusable content does not add its own Tab stop');
+    // Click selects.
+    await tabsOf(auto).nth(2).click();
+    assert((await sel(auto)) === '001' && (await shown(auto)) === '001', 'clicking a tab selects it');
+    await axeOn(page, '[data-pbgc-tabs][data-activation=auto]', 'tabs');
+
+    // Manual: arrows move focus only; Enter or Space selects.
+    await tabsOf(man).nth(0).focus();
+    await page.keyboard.press('ArrowRight');
+    assert((await focusedIdx(man)) === 1 && (await sel(man)) === '100' && (await shown(man)) === '100', 'ArrowRight moves focus WITHOUT selecting (manual)');
+    await page.keyboard.press('Enter');
+    assert((await sel(man)) === '010' && (await shown(man)) === '010', 'Enter selects the focused tab');
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('Space');
+    assert((await sel(man)) === '001', 'Space selects the focused tab');
+    // Leaving the list in manual mode: Tab goes to the selected tab's panel, and only the selected tab is a Tab stop.
+    await page.keyboard.press('Home');
+    await page.keyboard.press('Tab');
+    assert((await stops(man)) === 1 && (await sel(man)) === '001', 'after leaving, only the selected tab is a Tab stop');
+    assert(await page.evaluate(() => { const p = document.activeElement?.closest('[role=tabpanel]'); return !!p && document.getElementById(p.getAttribute('aria-labelledby'))?.getAttribute('aria-selected') === 'true'; }), 'Tab from a manual tab list goes to the SELECTED panel');
+  },
 };
 
 // Storybook story id (React build) and whether the reference page (vanilla build) has the scenario too.
@@ -492,8 +548,9 @@ const STORIES = {
   textarea: 'molecules-textarea--with-limit',
   switch: 'molecules-switch--default',
   pii: 'molecules-sensitivedatabanner--default',
+  tabs: 'molecules-tabs--default',
 };
-const REFERENCE = new Set(['menu', 'dialog', 'tooltip', 'toggletip', 'filepicker', 'carousel', 'toast', 'numeric', 'textarea', 'switch', 'pii', 'nopopover']);
+const REFERENCE = new Set(['menu', 'dialog', 'tooltip', 'toggletip', 'filepicker', 'carousel', 'toast', 'numeric', 'textarea', 'switch', 'pii', 'tabs', 'nopopover']);
 const REFERENCE_ONLY = new Set(['nopopover']); // simulates an old browser; only the framework-free page is used // confirm is React-only sugar over <form method=dialog>
 
 let total = 0;
