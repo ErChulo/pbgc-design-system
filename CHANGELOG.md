@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.0 (2026-11-14)
+
+### Added
+- **SensitiveDataBanner** (React and framework-free markup): tells people the screen shows PII or other sensitive data. Not dismissible, not sticky, not a live region (reasons in `design.md` section 7). A new padlock icon, the words "Sensitive data", a full border and a heavy top rule that still prints in black and white and shows in Windows High Contrast. Uses the existing warning colors, so no new contrast pairs.
+- The handling wording is PBGC's, and PBGC's required marking text is not in the source material. The default says only what the page contains; apps pass the exact required text as `children` and may link a policy with `policyHref`.
+- `pii` scenario in the behavior gate (24 runs, was 22: one scenario on each build): not sticky or fixed, no dismiss control, not a live region, heavy rule in print and forced colors.
+
 ## 1.4.0 (2026-11-14)
 
 ### Added

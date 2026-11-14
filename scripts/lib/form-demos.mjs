@@ -45,3 +45,17 @@ export const textFieldDemos = `
       </div>
     </div>
 `;
+
+export const piiDemos = `
+    <h3 style="margin-top:2rem">Sensitive data banner</h3>
+    <div class="ref-demo" id="demo-pii">
+      <div class="pbgc-pii">
+        <svg class="pbgc-pii__icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4.5" y="10.5" width="15" height="10.5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 10.5V7.5a4 4 0 018 0v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 15v2.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        <div class="pbgc-pii__body">
+          <p class="pbgc-pii__title">Sensitive data</p>
+          <p class="pbgc-pii__text">This page contains personally identifiable information (PII). Handle it only as PBGC policy requires.</p>
+        </div>
+      </div>
+      <p class="pbgc-small pbgc-muted">Not dismissible and not sticky. Replace the wording with the exact text your application must show.</p>
+    </div>
+`;
