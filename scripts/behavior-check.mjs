@@ -617,6 +617,51 @@ const SCENARIOS = {
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'no horizontal scroll at 375px');
     await axeOn(page, 'dl.pbgc-stats', 'stat tiles at 375px');
   },
+  async datefield(page) {
+    const input = page.locator('[data-pbgc-date] input').first();
+    const errText = () => page.evaluate(() => { const e = document.querySelector('[data-df-error]'); return e.hidden ? '' : e.textContent; });
+    await page.evaluate(() => { window.__last = null; document.querySelector('[data-pbgc-date]').addEventListener('pbgc:value', (e) => { window.__last = e.detail; }); });
+    const last = () => page.evaluate(() => window.__last);
+
+    assert((await attr(page, '[data-pbgc-date] input', 'type')) === 'text', 'it is a text input, not type=date');
+    assert((await attr(page, '[data-pbgc-date] input', 'inputmode')) === 'numeric', 'phones show the number pad');
+    assert((await attr(page, '[data-pbgc-date] input', 'maxlength')) === null, 'no maxlength (browsers cut pastes off silently)');
+
+    // Several ways of typing the same date are all shown the same way after leaving the field.
+    for (const typed of ['1/5/1960', '01-05-1960', '01.05.1960', '01051960', '1960-01-05']) {
+      await input.focus();
+      await input.fill(typed);
+      await page.keyboard.press('Tab');
+      assert((await input.inputValue()) === '01/05/1960', `"${typed}" is shown as 01/05/1960 (got "${await input.inputValue()}")`);
+      assert((await errText()) === '', `"${typed}" raises no error`);
+    }
+    const d = await last();
+    assert(d.value === '1960-01-05' && d.valid === true, `the value is the ISO date 1960-01-05 (got ${JSON.stringify(d)})`);
+
+    // Never guesses.
+    await input.focus(); await input.fill('1/5/60'); await page.keyboard.press('Tab');
+    assert((await errText()) === 'Error: Enter the year with 4 digits, for example 1960.', `two-digit year is an error (got "${await errText()}")`);
+    assert((await input.inputValue()) === '1/5/60', 'what was typed is left exactly as typed');
+    assert((await attr(page, '[data-pbgc-date] input', 'aria-invalid')) === 'true', 'aria-invalid is set');
+    assert((await last()).value === null, 'an invalid entry has no value');
+    await axeOn(page, '[data-pbgc-date]', 'date field in its error state');
+    await input.focus(); await input.fill('02/30/2024');
+    assert((await errText()) === 'Error: February 2024 has 29 days.', `impossible date is named, and updates while typing (got "${await errText()}")`);
+    await input.fill('02/29/2024');
+    assert((await errText()) === '', 'the error clears the moment the date is fixed');
+    await page.keyboard.press('Tab');
+    assert((await last()).value === '2024-02-29', 'a leap day is accepted');
+
+    // Month first, always.
+    await input.focus(); await input.fill('12/11/2000'); await page.keyboard.press('Tab');
+    assert((await last()).value === '2000-12-11', '12/11/2000 is December 11 (never swapped)');
+
+    // Limits and required.
+    await input.focus(); await input.fill('12/31/1899'); await page.keyboard.press('Tab');
+    assert((await errText()) === 'Error: Enter a date from 01/01/1900 to 12/31/2099.', `limits are named (got "${await errText()}")`);
+    await input.focus(); await input.fill(''); await page.keyboard.press('Tab');
+    assert((await errText()).startsWith('Error: Enter '), `required error on an empty field (got "${await errText()}")`);
+  },
 };
 
 // Storybook story id (React build) and whether the reference page (vanilla build) has the scenario too.
@@ -638,8 +683,9 @@ const STORIES = {
   deflist: 'molecules-descriptionlist--default',
   emptystate: 'molecules-emptystate--nothing-yet',
   stats: 'molecules-stattiles--default',
+  datefield: 'molecules-datefield--default',
 };
-const REFERENCE = new Set(['menu', 'dialog', 'tooltip', 'toggletip', 'filepicker', 'carousel', 'toast', 'numeric', 'textarea', 'switch', 'pii', 'tabs', 'stepper', 'deflist', 'emptystate', 'stats', 'nopopover']);
+const REFERENCE = new Set(['menu', 'dialog', 'tooltip', 'toggletip', 'filepicker', 'carousel', 'toast', 'numeric', 'textarea', 'switch', 'pii', 'tabs', 'stepper', 'deflist', 'emptystate', 'stats', 'datefield', 'nopopover']);
 const REFERENCE_ONLY = new Set(['nopopover']); // simulates an old browser; only the framework-free page is used // confirm is React-only sugar over <form method=dialog>
 
 let total = 0;
