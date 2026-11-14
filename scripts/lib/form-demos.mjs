@@ -19,3 +19,29 @@ export const numericDemos = `
       <p class="pbgc-small pbgc-muted">It never rounds what you type: too many decimal places is an error. Up to 15 digits. A percent is in percent units (5.25 means 5.25%).</p>
     </div>
 `;
+
+export const textFieldDemos = `
+    <h3 style="margin-top:2rem">Textarea and switch</h3>
+    <div class="ref-demo" id="demo-textarea">
+      <div class="pbgc-field pbgc-textarea" data-pbgc-textarea data-max="40" data-required>
+        <label class="pbgc-field__label" for="ta-1">Sample explanation<span class="pbgc-field__required"> (required)</span></label>
+        <p class="pbgc-field__hint" id="ta-1-hint">Describe the sample situation. The limit is 40 characters.</p>
+        <textarea id="ta-1" class="pbgc-field__input pbgc-textarea__input" rows="4" aria-required="true" aria-describedby="ta-1-hint ta-1-count ta-1-error"></textarea>
+        <p class="pbgc-textarea__count" id="ta-1-count" data-ta-count></p>
+        <span class="pbgc-sr-only" role="status" data-ta-status></span>
+        <p class="pbgc-field__error" id="ta-1-error" data-ta-error hidden></p>
+      </div>
+      <p class="pbgc-small pbgc-muted">The limit is soft: nothing is cut off, and going over is an error that says by how many.</p>
+    </div>
+    <div class="ref-demo" id="demo-switch">
+      <div class="pbgc-switch">
+        <label class="pbgc-switch__label" for="sw-1">
+          <input id="sw-1" class="pbgc-switch__input" type="checkbox" role="switch" aria-describedby="sw-1-hint">
+          <span class="pbgc-switch__track" aria-hidden="true"><span class="pbgc-switch__knob"></span></span>
+          <span class="pbgc-switch__text">Email notifications</span>
+          <span class="pbgc-switch__state" aria-hidden="true"></span>
+        </label>
+        <p class="pbgc-switch__hint" id="sw-1-hint">Sample setting. Takes effect immediately.</p>
+      </div>
+    </div>
+`;

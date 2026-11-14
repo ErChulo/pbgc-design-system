@@ -51,6 +51,7 @@ npm run vanilla            # build dist/pbgc.js + dist/pbgc.css (framework-free)
 npm run test:reference     # reference page: axe at 1200px and 375px, both themes, no network
 npm run test:behavior      # real keystrokes on the interactive components, React and vanilla builds
 npm run test:numeric       # numeric field parse/format rules (no browser needed)
+npm run test:fields        # textarea counter rules (no browser needed)
 ```
 
 Full pre-release check: `npm test` (tokens, vanilla build, reference build, Storybook build, axe on every story, reference-page check, behavior check).
@@ -105,9 +106,10 @@ Logo artwork is never committed: `.gitignore` excludes it, so copying the files 
 |---|---|
 | 65 color-pair contrast checks, light + dark | Pass (computed, `tokens/contrast-report.md`) |
 | Storybook builds | Pass |
-| axe-core on 79 stories x 2 themes (158 runs), including open dialog, menu, tooltip and toggletip | Pass, 0 violations |
+| axe-core on 91 stories x 2 themes (182 runs), including open dialog, menu, tooltip and toggletip | Pass, 0 violations |
 | Numeric field parsing and formatting (6,074 checks, including a property test that values of up to 15 digits stay exact in a double) | Pass. Negative controls: two deliberately broken rules were both caught |
-| Keystroke and pointer behavior of the 8 interactive components, React build and vanilla build, the numeric field, and a simulated browser without the Popover API (18 runs) | Pass. Negative controls: two deliberately broken behaviors were caught, and the shipped v1.2.0 page fails the no-Popover scenario |
+| Textarea counter rules (14 checks: emoji count once, 20% threshold, exactly at the limit is allowed) | Pass |
+| Keystroke and pointer behavior of the 8 interactive components, React build and vanilla build, the numeric field, textarea and switch, and a simulated browser without the Popover API (22 runs) | Pass. Negative controls: deliberately broken behaviors were caught (including silent truncation in the textarea and a wrong switch state), and the shipped v1.2.0 page fails the no-Popover scenario |
 | axe-core on the reference page at 1200px and 375px, both themes | Pass, 0 violations, no horizontal scroll, 0 external requests |
 | Negative control (axe flags known-bad contrast and alt text here) | Pass |
 | Carousel pan/swipe on a touch device | **Not done** (only button and keyboard paths are tested) |

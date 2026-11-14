@@ -398,6 +398,68 @@ const SCENARIOS = {
     await page.locator('[data-toast="success"]').click();
     assert(await page.evaluate(() => document.querySelectorAll('.pbgc-toast').length === 1), 'toasts still work');
   },
+  async textarea(page) {
+    const sel = '[data-pbgc-textarea] textarea';
+    const ta = page.locator(sel).first();
+    const errText = () => page.evaluate(() => { const e = document.querySelector('[data-ta-error]'); return e.hidden ? '' : e.textContent; });
+    const count = () => page.locator('[data-ta-count]').first().textContent();
+    const status = () => page.locator('[data-ta-status]').first().textContent();
+    const max = Number(await attr(page, '[data-pbgc-textarea]', 'data-max'));
+
+    // Before the first blur nothing complains; the visible count tracks typing.
+    await ta.focus();
+    await page.keyboard.type('hello');
+    assert((await count()) === `5 of ${max} characters`, `count updates on every key (got "${await count()}")`);
+    assert((await errText()) === '', 'no error while typing within the limit');
+    assert((await status()) === '', 'screen readers are not interrupted while plenty is left');
+
+    // Required: empty text is an error only after leaving the field, then clears as soon as it is fixed.
+    await ta.fill('');
+    await page.keyboard.press('Tab');
+    assert((await errText()) === 'Error: Enter a response.', `required error on blur (got "${await errText()}")`);
+    assert((await attr(page, sel, 'aria-invalid')) === 'true', 'aria-invalid is set');
+    await axeOn(page, '[data-pbgc-textarea]', 'textarea in its error state');
+    await ta.focus();
+    await page.keyboard.type('x');
+    assert((await errText()) === '', 'error clears as soon as text is entered');
+
+    // The limit is soft: pasted text is NOT cut, and the error says by how many.
+    const long = 'y'.repeat(max + 7);
+    await ta.fill(long);
+    assert((await ta.inputValue()) === long, 'text over the limit is never truncated');
+    assert((await errText()) === `Error: Use ${max} characters or fewer. You are 7 over.`, `over-limit error appears at once (got "${await errText()}")`);
+    assert((await count()) === `7 over the limit of ${max}`, 'the visible count says how far over');
+    assert((await attr(page, sel, 'maxlength')) === null, 'there is no maxlength attribute (browsers truncate pastes silently)');
+    await axeOn(page, '[data-pbgc-textarea]', 'textarea over its limit');
+
+    // Screen readers hear the count after a pause, not on every key.
+    await page.waitForTimeout(1300);
+    assert((await status()) === '7 characters over the limit.', `announced after a pause (got "${await status()}")`);
+
+    // Emoji count as one character.
+    await ta.fill('😀'.repeat(max));
+    assert((await errText()) === '', 'emoji count once each, so exactly the limit is fine');
+  },
+
+  async switch(page) {
+    const sw = page.locator('[role=switch]').first();
+    const state = () => page.evaluate(() => getComputedStyle(document.querySelector('.pbgc-switch__state'), '::after').content);
+    assert((await attr(page, '[role=switch]', 'role')) === 'switch', 'role is switch');
+    assert((await sw.isChecked()) === false, 'starts off');
+    assert((await state()) === '"Off"', 'the word Off is shown');
+    await sw.focus();
+    await page.keyboard.press('Space');
+    assert((await sw.isChecked()) === true, 'Space turns it on');
+    assert((await state()) === '"On"', 'the word On is shown, so state is not color alone');
+    await page.keyboard.press('Space');
+    assert((await sw.isChecked()) === false, 'Space turns it off');
+    // Clicking the label text toggles it too, and the click target is at least 44px tall.
+    await page.locator('.pbgc-switch__text').first().click();
+    assert((await sw.isChecked()) === true, 'clicking the label toggles it');
+    const h = await page.evaluate(() => document.querySelector('.pbgc-switch__label').getBoundingClientRect().height);
+    assert(h >= 44, `target is at least 44px tall (got ${h})`);
+    await axeOn(page, '.pbgc-switch', 'switch');
+  },
 };
 
 // Storybook story id (React build) and whether the reference page (vanilla build) has the scenario too.
@@ -411,8 +473,10 @@ const STORIES = {
   carousel: 'organisms-carousel--default',
   toast: 'organisms-toast--playground',
   numeric: 'molecules-numericfield--currency',
+  textarea: 'molecules-textarea--with-limit',
+  switch: 'molecules-switch--default',
 };
-const REFERENCE = new Set(['menu', 'dialog', 'tooltip', 'toggletip', 'filepicker', 'carousel', 'toast', 'numeric', 'nopopover']);
+const REFERENCE = new Set(['menu', 'dialog', 'tooltip', 'toggletip', 'filepicker', 'carousel', 'toast', 'numeric', 'textarea', 'switch', 'nopopover']);
 const REFERENCE_ONLY = new Set(['nopopover']); // simulates an old browser; only the framework-free page is used // confirm is React-only sugar over <form method=dialog>
 
 let total = 0;
