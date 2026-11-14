@@ -25,10 +25,12 @@ Suffix = color: **`fc`** full color, **`bw`** black and white, **`wt`** white (r
 | `banner-slim` | `PBGC_logo_banner_slim_{fc,bw,wt}.png` | Banner, agency name without "PBGC" |
 | `banner-text-slim` | `PBGC_logo_text_banner_slim_{fc,bw,wt}.png` | Banner, agency name and "PBGC" |
 
-**The mapping above is inferred from file names, not verified by eye.** Open each file and confirm it matches the variant in the style guide (pp. 7-8) before relying on it (`OPEN-QUESTIONS.md` Q8).
+**The mapping above is inferred from file names and has been adopted as the working mapping** (`OPEN-QUESTIONS.md` Q8). It was not checked by eye. If a file turns out to be a different variant than its name says, change the one line in `FILES` in `src/components/Logo/Logo.jsx`.
 
 All 21 PNGs above (7 variants x 3 colors) exist in the Drive folder, plus two vector masters:
 `PBGC-Logo-FullColor.eps` and `PBGC-Logo-Tagline-FullColor.eps`. Do not convert the EPS masters to SVG without COLA approval.
+
+**Do not commit these files.** `.gitignore` excludes `assets/logos/*.png`, `.eps`, `.svg` and `.pdf` so official artwork cannot reach the repository by accident (`OPEN-QUESTIONS.md` Q10).
 
 ## Excluded
 
@@ -37,6 +39,6 @@ All 21 PNGs above (7 variants x 3 colors) exist in the Drive folder, plus two ve
 ## Usage rules (style guide pp. 9-11)
 
 - Minimum width **0.625 in (60px)**. The component enforces it.
-- Clear space equal to the width of the "P" in the logo on all sides.
+- Clear space equal to the width of the "P" in the logo on all sides. The component applies **imputed** (not measured) values, set generously: 10% of rendered width for horizontal and banner variants, 20% for square variants (`CLEAR_SPACE` in `Logo.jsx`).
 - Never outline the text, move elements, change colors, scale non-proportionally, or distort.
 - PNG is for web and Microsoft Office; EPS/PDF is for press and signage.

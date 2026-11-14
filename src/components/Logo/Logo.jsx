@@ -5,7 +5,7 @@ import React, { useState } from 'react';
  * re-creates the PBGC mark: the style guide forbids it (p. 11) and external use needs COLA approval.
  *
  * Filenames follow the set stored in Drive: 03_Branding_Assets/images. The variant-to-file mapping is
- * inferred from filenames and MUST be confirmed visually; see assets/logos/MANIFEST.md.
+ * INFERRED from file names (decided, not eyeballed); see assets/logos/MANIFEST.md.
  * Color suffixes: fc = full color, bw = black and white, wt = white (reversed).
  */
 const FILES = {
@@ -16,6 +16,23 @@ const FILES = {
   'square-no-name': (c) => `PBGC_logo_notag_${c}.png`,
   'banner-slim': (c) => `PBGC_logo_banner_slim_${c}.png`,
   'banner-text-slim': (c) => `PBGC_logo_text_banner_slim_${c}.png`,
+};
+
+/*
+ * Clear space, as a fraction of the rendered logo width. The style guide says clear space equals the width of
+ * the "P" in the logo. These fractions are IMPUTED, not measured: they were set at roughly 1.5 to 2 times the
+ * P width expected for each lockup (a P in a wide horizontal lockup is a smaller share of the width than in a
+ * stacked square lockup), so they err toward MORE space, which keeps the logo compliant. Replace with
+ * measured values from the master files when someone can (design.md section 4, OPEN-QUESTIONS.md Q4).
+ */
+export const CLEAR_SPACE = {
+  horizontal: 0.1,
+  'alt-horizontal': 0.1,
+  'banner-slim': 0.1,
+  'banner-text-slim': 0.1,
+  square: 0.2,
+  'square-tagline': 0.2,
+  'square-no-name': 0.2,
 };
 
 const DEFAULT_ALT = {
@@ -32,8 +49,9 @@ export function Logo({ variant = 'horizontal', color = 'fc', width = 200, alt, b
   const safeWidth = Math.max(width, 60);
 
   if (!file) return null;
+  const clearSpace = `${(safeWidth * (CLEAR_SPACE[variant] ?? 0.2)).toFixed(1)}px`;
   return (
-    <span className="pbgc-logo">
+    <span className="pbgc-logo" style={{ '--pbgc-logo-clear-space': clearSpace }}>
       {missing ? (
         <span className="pbgc-logo__missing" role="img" aria-label={label}>
           [Official PBGC logo: copy <code>{file}</code> into assets/logos/]

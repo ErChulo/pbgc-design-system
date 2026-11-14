@@ -124,7 +124,7 @@ The component renders **official files only** and shows a labelled placeholder i
 - **Web header:** horizontal logo with agency name (style guide p. 7: "for letterhead, the web, and limited-size documents").
 - **On PBGC Blue:** use the white (`wt`) artwork.
 - **Minimum width:** 0.625 in = **60px**. The component clamps; it will not render smaller.
-- **Clear space:** equal to the width of the "P" in the logo (measurement pending, `OPEN-QUESTIONS.md` Q4). Default 0.5rem padding until measured.
+- **Clear space:** the guide says it equals the width of the "P" in the logo. The master files were not measured, so the component uses **imputed** values, deliberately generous: 10% of the rendered width for horizontal and banner lockups, 20% for square lockups (`CLEAR_SPACE` in `Logo.jsx`, `OPEN-QUESTIONS.md` Q4). More space than the guide requires is compliant; replace these with measured values when someone can open the masters.
 - **Never:** outline the text, move or rearrange elements, alter colors, scale non-proportionally, distort, or redraw (style guide p. 11).
 - **Alt text:** "Pension Benefit Guaranty Corporation". When the logo is the home link, "PBGC home".
 - **External use needs COLA approval:** COLAGraphicsAV@pbgc.gov.
@@ -290,7 +290,7 @@ Fact sheets and letters are printed. Stylesheet rules shipped in `components.css
 
 - **Versioning:** semantic. Any change to a token value is at least a minor version; any removal is major.
 - **Single edit point:** change `tokens/tokens.json`, run `npm run tokens`. Never edit `tokens.css` or `contrast-report.md`.
-- **Derived values** and every decision made without a PBGC source are tracked in `OPEN-QUESTIONS.md` (each marked Decided, Default in use, or Blocked on PBGC) until COLA confirms or replaces them.
+- **Derived values** and every decision made without a PBGC source are tracked in `OPEN-QUESTIONS.md` (each marked Decided, Imputed, or Default in use) until COLA confirms or replaces them.
 - **Source map:** the style guide supplied colors, type, logo rules, and editorial rules; `pbgc-logo-guidance.pdf` supplied logo files and clear-space rules; the two interior-page `.docx` templates supplied only the "Main Header / Secondary Header" structure; `pbgc-branding-templates-icons-logo.txt` points to an internal SharePoint library of icons and templates that was not available to this review.
 
 ---

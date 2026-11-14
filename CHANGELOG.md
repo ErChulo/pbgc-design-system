@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.2 (2026-11-13)
+
+No open question is blocked any more. The six that were waiting on PBGC facts are now decisions or an imputed value, so no component depends on an unanswered question and none was removed.
+
+### Changed
+- **Logo clear space is imputed, not measured** (Q4). `Logo` sets clear space per variant instead of a fixed 0.5rem: 10% of rendered width for horizontal and banner lockups, 20% for square lockups, deliberately generous. Exported as `CLEAR_SPACE`. Visible effect: the default header logo (180px wide) now has 18px of clear space on each side, up from 8px, so the header is about 20px taller. The master files could not be measured; replace with measured values when possible.
+- Logo variant-to-file mapping (Q8) adopted as the working mapping, inferred from file names and not checked by eye.
+- Q10: official artwork can no longer be committed by accident; `.gitignore` excludes `assets/logos/*.png`, `.eps`, `.svg`, `.pdf`.
+- Q11 (test tool), Q13 (icons) and Q14 (web templates) recorded as decisions.
+- `OPEN-QUESTIONS.md` gains an **Imputed** status so estimated values are never mistaken for measured or sourced ones.
+
 ## 1.2.1 (2026-11-13)
 
 Open-question triage, plus one real fix found while closing Q17.
