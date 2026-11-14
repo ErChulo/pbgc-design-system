@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.2.1 (2026-11-13)
+
+Open-question triage, plus one real fix found while closing Q17.
+
+### Fixed
+- **Browsers without the Popover API** (Firefox ESR 115, Chrome/Edge before 114, Safari before 17): v1.2.0 called the Popover API with no feature check, so ActionMenu, Tooltip and Toggletip had no working fallback. They now degrade: `<html>` gets `pbgc-no-popover`, one console warning is logged, ActionMenu shows its actions inline as plain buttons and still fires `pbgc:select`, Toggletip help shows inline, and tooltips (supplementary text only) are hidden. `PBGC.support.popover` exposes the check.
+
+### Added
+- `design.md` section 10.1: interface-text rules (buttons, links, errors, notifications, loading, confirmations, empty states).
+- `design.md` section 13: supported browsers and what degrades where.
+- `nopopover` scenario in the behavior gate (16 runs, was 15). It was verified against the merged v1.2.0 page, which fails it.
+
+### Changed
+- `OPEN-QUESTIONS.md` rewritten with a status on every item: Decided (Q5, Q6, Q7, Q9, Q11 standard, Q12, Q15, Q16, Q18), Default in use and confirm (Q1, Q2, Q3, Q17), Blocked on PBGC (Q4, Q8, Q10, Q11 test tool, Q13, Q14). Nothing blocked was guessed.
+- `design.md` section 3 records the type decision (Arial for all web UI; Garamond only for long-form fact sheets).
+- Next-component order recorded in Q16: numeric/currency field, Textarea and Switch, PII banner, Tabs, Stepper, summaries, date input, Sidebar, charts.
+
 ## 1.2.0 (2026-11-13)
 
 Overlay and feedback components, built native-first and delivered twice: React, and a framework-free build for single-file HTML apps. Both share one behavior implementation (`src/behaviors/index.js`), so they cannot drift.

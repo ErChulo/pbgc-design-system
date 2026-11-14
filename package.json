@@ -1,6 +1,6 @@
 {
   "name": "pbgc-design-system",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "description": "PBGC design system: tokens, accessible React components, and Storybook.",
   "type": "module",
