@@ -90,7 +90,7 @@ git push
 
 `node_modules/` and `storybook-static/` are git-ignored. Commit `package-lock.json`.
 
-Do not push logo artwork to a public repository until COLA confirms it is permitted (`OPEN-QUESTIONS.md` Q10).
+Logo artwork is never committed: `.gitignore` excludes it, so copying the files in locally is safe (`OPEN-QUESTIONS.md` Q10).
 
 ## How to change a color
 

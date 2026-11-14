@@ -2,3 +2,10 @@ node_modules/
 storybook-static/
 .DS_Store
 *.log
+
+# Official PBGC logo artwork is never committed (OPEN-QUESTIONS.md Q10). Copy it in locally from the official source;
+# assets/logos/MANIFEST.md is the only tracked file in that folder.
+assets/logos/*.png
+assets/logos/*.eps
+assets/logos/*.svg
+assets/logos/*.pdf

@@ -1,20 +1,22 @@
 # Open questions and decisions
 
-The source material does not settle everything. Each item below is a place where this design system had to make a call. As of v1.2.1 every item has a status:
+The source material does not settle everything. Each item below is a place where this design system had to make a call. As of v1.2.2 every item has a status:
 
 - **Decided.** A system-level call has been made and recorded with its reasoning. It stays in force unless PBGC overrules it. Nothing is waiting on anyone.
 - **Default in use, confirm.** A default is shipping, and it rests on an assumption about PBGC that only PBGC can confirm. Ask once; if the answer differs it is a small change (noted per item).
-- **Blocked on PBGC.** A fact only PBGC holds (an official file, a library, an approval). A safe placeholder is in place. Guessing would be worse than waiting.
+- **Imputed.** The value was estimated, not measured or sourced, because the source was not available to this review. It is set on the safe side, labelled as imputed everywhere it appears, and should be replaced by a measured or official value when one is available.
 
-Send the confirm and blocked items to COLA (COLAGraphicsAV@pbgc.gov) and, for accessibility, the Section 508 team (Section508ComplianceTeam@pbgc.gov). Record the answers here and in `tokens/tokens.json`.
+Send the "confirm" and "imputed" items to COLA (COLAGraphicsAV@pbgc.gov) and, for accessibility, the Section 508 team (Section508ComplianceTeam@pbgc.gov). Record the answers here and in `tokens/tokens.json`.
 
 ## Summary
 
 | Status | Items |
 |---|---|
-| Decided | Q5, Q6, Q7, Q9, Q11 (standard), Q12, Q15, Q16, Q18 |
+| Decided | Q5, Q6, Q7, Q8, Q9, Q10, Q11, Q12, Q13, Q14, Q15, Q16, Q18 |
+| Imputed (estimated, not measured) | Q4 |
 | Default in use, confirm | Q1, Q2, Q3, Q17 |
-| Blocked on PBGC | Q4, Q8, Q10, Q11 (test tool), Q13, Q14 |
+
+Nothing is blocked. v1.2.2 converted the six items that were waiting on PBGC facts into decisions or an imputed value, so no component depends on an unanswered question. The values and choices most worth a look by PBGC when convenient are Q4 (logo clear space), Q8 (logo file mapping), Q17 (browsers) and Q1 to Q3 (colors).
 
 ---
 
@@ -30,14 +32,14 @@ The other secondary colors (Gray, Light Blue Gray, Medium Green, Teal, Light Gre
 
 ## B. Logo
 
-The logo is official artwork that may not be redrawn, so `assets/logos/` is intentionally empty and the `Logo` component shows a labelled placeholder. These items need the real files and a ruling.
+The logo is official artwork that may not be redrawn, so `assets/logos/` is intentionally empty of artwork and the `Logo` component shows a labelled placeholder until files are copied in locally.
 
 | # | Question | Status and decision |
 |---|---|---|
-| Q4 | **Clear space** is "the width of the P in the logo". Which file is the master for measuring, and what is that width as a fraction of the logo width? | **Blocked on PBGC.** Placeholder default: 0.5rem. Measuring needs the real master. |
-| Q8 | **Which logo file maps to which guide variant?** File names (`name_hor`, `words_only`, `tagl`, `notag`, `banner_slim`, `text_banner_slim`) were mapped by inference; see `assets/logos/MANIFEST.md`. | **Blocked on PBGC.** Needs a visual check against the guide with the files in hand. |
+| Q4 | **Clear space** is "the width of the P in the logo". Which file is the master for measuring, and what is that width as a fraction of the logo width? | **Imputed.** The master files could not be measured here, so the `Logo` component applies generous estimates: 10% of the rendered width for horizontal and banner lockups, 20% for square lockups (about 1.5 to 2 times the expected P width). More space than required stays compliant; the cost is some extra whitespace. Measure the P in `PBGC_logo_name_hor_fc.png` and `PBGC_logo_fc.png` and update `CLEAR_SPACE` in `Logo.jsx` to replace the estimate. |
+| Q8 | **Which logo file maps to which guide variant?** File names (`name_hor`, `words_only`, `tagl`, `notag`, `banner_slim`, `text_banner_slim`) were mapped by inference; see `assets/logos/MANIFEST.md`. | **Decided.** The file-name mapping is the working mapping. It was not checked by eye. The names are consistent with the guide's variant names, and the risk is contained: if a file proves to be a different variant than its name says, the fix is one line in `FILES` in `Logo.jsx`. |
 | Q9 | **`logo-negro.png`** has a Spanish name, an older modified date, and is not in the guide. Is it official? | **Decided.** It stays excluded. Using an unverified file as an official logo is the worse error. The official monochrome files are `PBGC_logo_bw.png` and `PBGC_logo_notag_bw.png`. Reopen only if COLA says it is official. |
-| Q10 | **Approval to store the logo in a repository and to publish it.** The guide requires COLA approval for external use. Does the GitHub repository count? | **Blocked on PBGC.** Note: `ErChulo/pbgc-design-system` is currently **public**, and other projects depend on it, so visibility was not changed. No official logo artwork is stored in it. Before any artwork is added, confirm with COLA that the repository is an approved location, or make it private. Separately, decide whether a public repository is acceptable for design guidance derived from internal PBGC style documents. |
+| Q10 | **Approval to store the logo in a repository and to publish it.** The guide requires COLA approval for external use. Does the GitHub repository count? | **Decided.** Policy: official artwork is never committed to this repository. `.gitignore` now excludes `assets/logos/*.png`, `.eps`, `.svg` and `.pdf`, so it cannot be added by accident, and each app copies the files in locally from the official source. That removes the approval question for this repository. Separate and not decided here: `ErChulo/pbgc-design-system` is **public** (other projects depend on it, so the system did not change it). Whether design guidance derived from internal PBGC style documents may be public is the repository owner's call. |
 
 ## C. Values this system derived (not in any PBGC source)
 
@@ -57,10 +59,10 @@ The logo is official artwork that may not be redrawn, so `assets/logos/` is inte
 
 | # | Question | Status and decision |
 |---|---|---|
-| Q11 | **Which WCAG version does PBGC require?** And is there a PBGC-specific accessibility test tool? | **Decided (standard).** The system targets WCAG 2.2 AA. To our understanding Section 508 incorporates WCAG 2.0 AA by reference; 2.2 AA is a superset, so meeting it meets 2.0 AA, and automated checks are tagged 2.0, 2.1 and 2.2. **Blocked on PBGC (test tool).** Whether PBGC requires a specific tool (for example Trusted Tester or ANDI) is unknown. Until told, the manual checks in `design.md` section 9.4 are the release gate. Note that automated checks cover only part of WCAG, and no screen-reader testing has been done. |
+| Q11 | **Which WCAG version does PBGC require?** And is there a PBGC-specific accessibility test tool? | **Decided (standard).** The system targets WCAG 2.2 AA. To our understanding Section 508 incorporates WCAG 2.0 AA by reference; 2.2 AA is a superset, so meeting it meets 2.0 AA, and automated checks are tagged 2.0, 2.1 and 2.2. **Test tool decided too.** Automated axe checks plus the manual checks in `design.md` section 9.4 are the release gate. If PBGC mandates a specific tool (for example Trusted Tester or ANDI), add it as a further manual step; it does not change any component. Note that automated checks cover only part of WCAG, and no screen-reader testing has been done. |
 | Q12 | **GSAP and other third-party libraries.** | **Decided.** No third-party runtime libraries. CSS transitions only, as in `design.md` section 6. Adding any library needs a dependency, license and supply-chain review first; that process is PBGC's to define. |
-| Q13 | **Icon set.** The official icon library is on an internal SharePoint site this review could not reach. | **Blocked on PBGC.** The status icons drawn in this system (a different shape per status) stay until an official set is provided; swapping them is a localized change in `Icon.jsx` and `src/behaviors/index.js`. |
-| Q14 | **Web templates.** Only Word templates were in the source folder. Is there a web template or a PBGC.gov pattern library to align with? | **Blocked on PBGC.** Nothing to align to yet. |
+| Q13 | **Icon set.** The official icon library is on an internal SharePoint site this review could not reach. | **Decided.** The status icons drawn in this system (a different shape per status, so meaning never depends on color) are the system's icons. They are not PBGC brand marks. If an official set is later provided, swapping them is a localized change in `Icon.jsx` and `src/behaviors/index.js`. |
+| Q14 | **Web templates.** Only Word templates were in the source folder. Is there a web template or a PBGC.gov pattern library to align with? | **Decided.** The system defines its own page structure (header, main, footer, layout and spacing rules) from the style guide. No web template exists in the source material to align to. If PBGC.gov patterns are supplied later, compare them against `design.md` sections 5 and 7. |
 | Q15 | **Editorial rules for UI microcopy.** | **Decided.** Rules written in `design.md` section 10.1 (buttons, links, errors, notifications, loading, confirmations, empty states). They extend the Editorial Style Guide rules and match the wording the components already use. COLA review welcome, not blocking. |
 | Q16 | **Which components next, and which apps consume the system first?** | **Decided.** First consumers: the single-file HTML utility apps, which is why the framework-free build is first-class. Next components, in this order: (1) numeric, currency and percent field; (2) Textarea and Switch; (3) sensitive-data (PII) banner; (4) Tabs; (5) Stepper; (6) description list, empty state and stat tile; (7) date input; (8) Sidebar and NavGroup; (9) charts, last and under their own data-visualization rules. Tabs and Stepper need the full keyboard model in `design.md` section 8 before they are built. |
 | Q17 | **Supported browser baseline.** | **Default in use, confirm.** Baseline: Chrome/Edge 114+, Firefox 125+, Safari 17+ (set by the Popover API). Where it is missing, menus, tooltips and toggletips now degrade instead of breaking (v1.2.1; see `design.md` section 13 and the `nopopover` test). Please confirm which browsers PBGC deploys. If Firefox ESR 115 or older Edge is in use, the degraded mode applies there; if IE mode is required, the system cannot support it. |
