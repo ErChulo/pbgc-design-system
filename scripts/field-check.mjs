@@ -1,0 +1,20 @@
+// Pure-function checks for the Textarea counter rules. No browser.
+import { countChars, textareaStatus } from '../src/behaviors/index.js';
+let n = 0, bad = 0;
+const eq = (a, b, m) => { n++; if (JSON.stringify(a) !== JSON.stringify(b)) { bad++; console.log(`FAIL ${m}: got ${JSON.stringify(a)}, want ${JSON.stringify(b)}`); } };
+eq(countChars(''), 0, 'empty');
+eq(countChars('abc'), 3, 'ascii');
+eq(countChars('é'), 1, 'precomposed accent');
+eq(countChars('😀'), 1, 'emoji is one character, not two');
+eq(countChars('a\nb'), 3, 'a line break counts as one');
+eq(textareaStatus('abc', 0), { length: 3, remaining: null, over: false, announce: '' }, 'no limit');
+eq(textareaStatus('', 100).announce, '', 'plenty left: silent');
+eq(textareaStatus('x'.repeat(79), 100).announce, '', '21 left: still silent');
+eq(textareaStatus('x'.repeat(80), 100).announce, '20 characters remaining.', '20% left: announce');
+eq(textareaStatus('x'.repeat(99), 100).announce, '1 character remaining.', 'singular');
+eq(textareaStatus('x'.repeat(100), 100), { length: 100, remaining: 0, over: false, announce: '0 characters remaining.' }, 'exactly at the limit is allowed');
+eq(textareaStatus('x'.repeat(101), 100), { length: 101, remaining: -1, over: true, announce: '1 character over the limit.' }, 'one over');
+eq(textareaStatus('x'.repeat(112), 100).announce, '12 characters over the limit.', 'many over');
+eq(textareaStatus('😀'.repeat(5), 5).over, false, 'emoji count as one against the limit');
+console.log(`${n} checks, ${bad} failed.`);
+process.exit(bad ? 1 : 0);

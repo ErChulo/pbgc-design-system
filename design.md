@@ -183,6 +183,8 @@ The v1.0.0 mapping "desktop = Word interior-page template" is withdrawn: the two
 | Toast (`useToast`, `PBGC.toast`) | Organism | Built (v1.2) | Two persistent live regions (polite; assertive for errors); info/success auto-dismiss at 10 s, warning/error persist; hover or focus pauses; status word is text; Escape and a Dismiss button |
 | Sidebar, NavGroup, date input | | Backlog | Native-element first; see `OPEN-QUESTIONS.md` Q16 |
 | NumericField (integer, decimal, currency, percent) | Molecule | Built (v1.3) | Text input with a decimal keypad, never `type=number`. Never silently rounds (too many decimals is an error); digits handled as a string, at most 15 so the value is exact; strict comma grouping; `$` and `%` shown beside the field and spoken in its description; errors appear on leaving the field and clear as soon as the mistake is fixed. Percent is in percent units. Not for IDs, phone numbers or ZIP codes |
+| Textarea | Molecule | Built (v1.4) | Multi-line text with the TextField label, hint and error. Optional character limit that is SOFT: no `maxlength` attribute (browsers cut pasted text off silently); going over is an error that says by how many and nothing is cut. Visible count on every key; screen readers hear it after a one-second pause and only when 20% or less is left. Characters counted as people count them (an emoji is one). Vertical resize only. |
+| Switch | Molecule | Built (v1.4) | Native checkbox with `role="switch"`, for a setting that takes effect immediately (use a checkbox if it applies only on Save). Label names the setting, not the action. State is never color alone: the knob moves and the word On or Off is printed. 44px target, forced-colors (Windows High Contrast) styles. No script needed. |
 | Tabs, charts, Stepper | | Backlog | Custom widgets: full keyboard model required before building (see §8) |
 
 Naming note: v1.0.0 mixed up layers (Input as a molecule, Alert as an organism). Layer here means: **atom** = single element; **molecule** = a small group working as one unit; **organism** = a self-contained section.
@@ -198,6 +200,7 @@ Native elements first. If a custom widget is unavoidable, it must implement the 
 - **Menu button (ActionMenu):** Enter, Space or ArrowDown opens on the first item; ArrowUp opens on the last; arrows move and wrap; Home/End jump; a typed letter jumps to the next item starting with it; Escape closes and returns focus to the button; Tab closes. Items use roving `tabindex`. Disabled items stay focusable (`aria-disabled`).
 - **Tooltip:** shows on hover and keyboard focus, stays while the pointer is over it, Escape dismisses it without moving focus. Never holds essential information.
 - **Disclosure/accordion:** `aria-expanded`, `aria-controls`, Enter and Space.
+- **Switch:** native checkbox with `role="switch"`; Space toggles (Enter does not, as with any checkbox).
 - **Menus and dropdowns:** ActionMenu is the single sanctioned custom menu, built because row and toolbar actions cannot be done with a native `<select>` or disclosure. Do not build another; to choose a form value use Select, for navigation use links.
 
 ---

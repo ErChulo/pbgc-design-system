@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.0 (2026-11-14)
+
+### Added
+- **Textarea**, React and framework-free. The character limit is soft on purpose: there is no `maxlength` attribute, because a browser cuts pasted text off silently. Going over is an error that says by how many, and the text is never changed. The visible count updates on every key; screen readers hear it only after a one-second pause and only when 20% or less is left, so typing is not interrupted. Characters are counted as people count them (an emoji is one). Required errors appear on leaving the field and clear as soon as they are fixed. `validate()`, `getValue()`, an `error` prop and a `pbgc:value` event, like NumericField.
+- **Switch**, a native checkbox with `role="switch"` (no script). For a setting that takes effect immediately. State is never color alone (the knob moves and On or Off is printed); 44px target; Windows High Contrast styles.
+- `countChars` and `textareaStatus` exported (also on `window.PBGC`).
+- `scripts/field-check.mjs` (`npm run test:fields`): 14 checks on the counter rules.
+- `textarea` and `switch` scenarios in the behavior gate (22 runs, was 18), on both builds. Verified to fail when the textarea truncates text and when the switch shows the wrong state word.
+
 ## 1.3.0 (2026-11-14)
 
 ### Added
