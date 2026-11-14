@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.0 (2026-11-14)
+
+### Added
+- **Stepper** (step indicator), React and static markup. Shows progress through a multi-step task; it is not a control, so it needs no custom keyboard model (this is why it is a native-first ordered list, not a tab-like widget).
+  - `aria-current="step"` on the current step; every step's state is also written for screen readers ("completed", "current step", "not completed"); a visible "Step 3 of 4: Review" summary states the position in plain text.
+  - State by shape, not only color: filled circle with a check mark, thick ring, thin ring; connector solid up to the current step and dashed after it.
+  - A completed step may link back (`href`); the current and upcoming steps are never links, because skipping ahead would bypass validation.
+  - A row when wide and a column when narrow (no sideways scroll). Uses existing tokens, so no new contrast pairs.
+  - The app owns the flow: move focus to the new step's heading when the step changes; do not also announce through a live region.
+- `stepper` scenario in the behavior gate (28 runs, was 26), both builds, including the 375px column and axe at both widths. Verified to fail when `aria-current` is missing, when the written state is missing, when an upcoming step is a link, and when the narrow layout does not stack (four negative controls).
+
 ## 1.6.0 (2026-11-14)
 
 ### Added

@@ -87,3 +87,19 @@ export const tabsDemos = `
       </div>
     </div>
 `;
+
+export const stepperDemos = `
+    <h3 style="margin-top:2rem">Stepper</h3>
+    <div class="ref-demo" id="demo-stepper">
+      <div class="pbgc-stepper">
+        <p class="pbgc-stepper__summary">Step 3 of 4: Review</p>
+        <ol class="pbgc-stepper__list" aria-label="Progress">
+          <li class="pbgc-stepper__step pbgc-stepper__step--complete"><a class="pbgc-stepper__link" href="#sample-step-1"><span class="pbgc-stepper__marker" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" focusable="false"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="pbgc-stepper__label">Participant</span><span class="pbgc-sr-only">, completed</span></a></li>
+          <li class="pbgc-stepper__step pbgc-stepper__step--complete"><a class="pbgc-stepper__link" href="#sample-step-2"><span class="pbgc-stepper__marker" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" focusable="false"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="pbgc-stepper__label">Plan</span><span class="pbgc-sr-only">, completed</span></a></li>
+          <li class="pbgc-stepper__step pbgc-stepper__step--current" aria-current="step"><span class="pbgc-stepper__inner"><span class="pbgc-stepper__marker" aria-hidden="true">3</span><span class="pbgc-stepper__label">Review</span><span class="pbgc-sr-only">, current step</span></span></li>
+          <li class="pbgc-stepper__step pbgc-stepper__step--upcoming"><span class="pbgc-stepper__inner"><span class="pbgc-stepper__marker" aria-hidden="true">4</span><span class="pbgc-stepper__label">Submit</span><span class="pbgc-sr-only">, not completed</span></span></li>
+        </ol>
+      </div>
+      <p class="pbgc-small pbgc-muted">Shows progress; it is not a control. Completed steps may link back. Your app moves focus to the new step's heading when the step changes.</p>
+    </div>
+`;
