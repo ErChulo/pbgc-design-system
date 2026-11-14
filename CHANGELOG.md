@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.8.0 (2026-11-14)
+
+### Added
+Three small display components, React and static markup, no script, no new tokens.
+- **DescriptionList**: label and value pairs as a real `<dl>`. A missing value reads "Not provided" (configurable), never a blank. Label beside value when wide, above it when narrow. Tabular figures; it never reformats amounts or dates.
+- **EmptyState**: says why a list or section is empty and offers one next step; wording differs for "nothing exists yet" and "nothing matches your filters". A real heading, not a live region, no illustration, no error styling.
+- **StatTiles**: 2 to 6 headline figures as a `<dl>`. Large tabular figure, optional context line for anything that changes, no trend arrows or red/green (change is stated in words). Tiles stack into a column when narrow.
+- `deflist`, `emptystate` and `stats` scenarios in the behavior gate (34 runs, was 28), both builds, including axe and the 375px layout. Six negative controls were each caught: a blank value, a narrow layout that does not stack (for the list and for the tiles), an empty state that is a live region, one with no heading, and a figure no larger than its label.
+
 ## 1.7.0 (2026-11-14)
 
 ### Added

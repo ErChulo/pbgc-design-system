@@ -106,10 +106,10 @@ Logo artwork is never committed: `.gitignore` excludes it, so copying the files 
 |---|---|
 | 65 color-pair contrast checks, light + dark | Pass (computed, `tokens/contrast-report.md`) |
 | Storybook builds | Pass |
-| axe-core on 103 stories x 2 themes (206 runs), including open dialog, menu, tooltip and toggletip | Pass, 0 violations |
+| axe-core on 111 stories x 2 themes (222 runs), including open dialog, menu, tooltip and toggletip | Pass, 0 violations |
 | Numeric field parsing and formatting (6,074 checks, including a property test that values of up to 15 digits stay exact in a double) | Pass. Negative controls: two deliberately broken rules were both caught |
 | Textarea counter rules (14 checks: emoji count once, 20% threshold, exactly at the limit is allowed) | Pass |
-| Keystroke and pointer behavior of the 8 interactive components, React build and vanilla build, the numeric field, textarea, switch and sensitive data banner, tabs, stepper, and a simulated browser without the Popover API (28 runs) | Pass. Negative controls: deliberately broken behaviors were caught (including silent truncation in the textarea and a wrong switch state), and the shipped v1.2.0 page fails the no-Popover scenario |
+| Keystroke and pointer behavior of the 8 interactive components, React build and vanilla build, the numeric field, textarea, switch and sensitive data banner, tabs, stepper, description list, empty state, stat tiles, and a simulated browser without the Popover API (34 runs) | Pass. Negative controls: deliberately broken behaviors were caught (including silent truncation in the textarea and a wrong switch state), and the shipped v1.2.0 page fails the no-Popover scenario |
 | axe-core on the reference page at 1200px and 375px, both themes | Pass, 0 violations, no horizontal scroll, 0 external requests |
 | Negative control (axe flags known-bad contrast and alt text here) | Pass |
 | Carousel pan/swipe on a touch device | **Not done** (only button and keyboard paths are tested) |
