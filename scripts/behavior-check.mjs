@@ -662,6 +662,72 @@ const SCENARIOS = {
     await input.focus(); await input.fill(''); await page.keyboard.press('Tab');
     assert((await errText()).startsWith('Error: Enter '), `required error on an empty field (got "${await errText()}")`);
   },
+  async sidebar(page) {
+    const nav = page.locator('[data-pbgc-sidebar]').first();
+    const active = () => page.evaluate(() => document.activeElement?.textContent.trim());
+    const consistent = () => nav.evaluate((el) => Array.from(el.querySelectorAll('button[aria-controls]:not([data-sb-toggle])')).every((b) => {
+      const open = b.getAttribute('aria-expanded') === 'true';
+      const l = document.getElementById(b.getAttribute('aria-controls'));
+      return open === !l.hidden && open === (l.offsetParent !== null);
+    }));
+    await page.setViewportSize({ width: 1200, height: 900 });
+    await page.waitForTimeout(150);
+
+    // Structure: a named nav landmark, one current page, and NO menu roles (this is navigation, not an app menu).
+    assert((await nav.getAttribute('aria-label')) !== null, 'the nav has an accessible name');
+    assert((await nav.locator('[aria-current="page"]').count()) === 1 && (await nav.locator('[aria-current="page"]').evaluate((el) => el.tagName)) === 'A', 'exactly one link is aria-current="page"');
+    assert((await nav.locator('[role=menu], [role=menuitem], [role=menubar]').count()) === 0, 'no menu roles: a menu role would promise arrow-key behavior');
+    assert(await nav.locator('[aria-current="page"]').isVisible(), 'the current page is never hidden inside a closed group')
+
+    // Wide: the Menu button is hidden and the list is shown; groups follow their aria-expanded.
+    assert(!(await nav.locator('[data-sb-toggle]').isVisible()), 'wide: the Menu button is hidden');
+    assert(await nav.locator('.pbgc-sidebar__list').first().isVisible(), 'wide: the list is shown');
+    const groups = nav.locator('button.pbgc-sidebar__group');
+    const g1 = groups.nth(0), g2 = groups.nth(1);
+    assert((await g1.getAttribute('aria-expanded')) === 'true', 'the group holding the current page starts open');
+    assert((await g2.getAttribute('aria-expanded')) === 'false', 'the other group starts closed');
+    assert(!(await nav.getByRole('link', { name: 'Monthly report' }).isVisible()), 'a closed group hides its links');
+    assert(await consistent(), 'aria-expanded agrees with what is shown');
+    await axeOn(page, '[data-pbgc-sidebar]', 'sidebar, wide');
+
+    // Keyboard: Enter and Space toggle a group and focus stays on its button.
+    await page.evaluate(() => { window.__ng = []; document.querySelector('[data-pbgc-sidebar]').addEventListener('pbgc:navgroup', (e) => window.__ng.push(e.detail.expanded)); });
+    await g2.focus();
+    await page.keyboard.press('Enter');
+    assert((await g2.getAttribute('aria-expanded')) === 'true' && await nav.getByRole('link', { name: 'Monthly report' }).isVisible(), 'Enter opens a group');
+    assert((await active()) === (await g2.textContent()).trim(), 'focus stays on the group button');
+    await page.keyboard.press('Tab');
+    assert((await active()) === 'Monthly report', 'Tab goes into the opened group');
+    await page.keyboard.press('Shift+Tab');
+    await page.keyboard.press('Space');
+    assert((await g2.getAttribute('aria-expanded')) === 'false' && !(await nav.getByRole('link', { name: 'Monthly report' }).isVisible()), 'Space closes the group');
+    await page.keyboard.press('Tab');
+    assert((await active()) === 'Sample help', `a closed group's links are skipped by Tab (landed on "${await active()}")`);
+    assert(JSON.stringify(await page.evaluate(() => window.__ng)) === '[true,false]', 'opening and closing fire pbgc:navgroup');
+    await g1.focus();
+    await page.keyboard.press('ArrowDown');
+    assert((await active()) === (await g1.textContent()).trim(), 'arrow keys do not move focus (Tab is the navigation key)');
+    assert(await consistent(), 'still consistent after keyboard use');
+
+    // Narrow: collapsed behind a Menu button; Escape closes and returns focus to it.
+    await page.setViewportSize({ width: 375, height: 800 });
+    await page.waitForTimeout(200);
+    const toggle = nav.locator('[data-sb-toggle]');
+    assert(await toggle.isVisible(), 'narrow: the Menu button is shown');
+    assert((await toggle.getAttribute('aria-expanded')) === 'false' && !(await nav.locator('.pbgc-sidebar__list').first().isVisible()), 'narrow: the list starts hidden');
+    await toggle.focus();
+    await page.keyboard.press('Enter');
+    assert((await toggle.getAttribute('aria-expanded')) === 'true' && await nav.locator('.pbgc-sidebar__list').first().isVisible(), 'narrow: Enter opens the menu');
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'narrow: no horizontal scroll');
+    await axeOn(page, '[data-pbgc-sidebar]', 'sidebar, narrow and open');
+    await nav.locator('.pbgc-sidebar__link').first().focus();
+    await page.keyboard.press('Escape');
+    assert((await toggle.getAttribute('aria-expanded')) === 'false' && !(await nav.locator('.pbgc-sidebar__list').first().isVisible()), 'narrow: Escape closes the menu');
+    assert((await active()) === (await toggle.textContent()).trim(), 'narrow: focus returns to the Menu button');
+    await page.setViewportSize({ width: 1200, height: 900 });
+    await page.waitForTimeout(150);
+    assert(await nav.locator('.pbgc-sidebar__list').first().isVisible() && !(await toggle.isVisible()), 'back to wide: the list is shown and the Menu button is hidden again');
+  },
 };
 
 // Storybook story id (React build) and whether the reference page (vanilla build) has the scenario too.
@@ -684,8 +750,9 @@ const STORIES = {
   emptystate: 'molecules-emptystate--nothing-yet',
   stats: 'molecules-stattiles--default',
   datefield: 'molecules-datefield--default',
+  sidebar: 'organisms-sidebar--default',
 };
-const REFERENCE = new Set(['menu', 'dialog', 'tooltip', 'toggletip', 'filepicker', 'carousel', 'toast', 'numeric', 'textarea', 'switch', 'pii', 'tabs', 'stepper', 'deflist', 'emptystate', 'stats', 'datefield', 'nopopover']);
+const REFERENCE = new Set(['menu', 'dialog', 'tooltip', 'toggletip', 'filepicker', 'carousel', 'toast', 'numeric', 'textarea', 'switch', 'pii', 'tabs', 'stepper', 'deflist', 'emptystate', 'stats', 'datefield', 'sidebar', 'nopopover']);
 const REFERENCE_ONLY = new Set(['nopopover']); // simulates an old browser; only the framework-free page is used // confirm is React-only sugar over <form method=dialog>
 
 let total = 0;
