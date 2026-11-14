@@ -34,5 +34,6 @@ export { DescriptionList } from './components/DescriptionList/DescriptionList.js
 export { EmptyState } from './components/EmptyState/EmptyState.jsx';
 export { StatTiles } from './components/StatTiles/StatTiles.jsx';
 export { Stepper } from './components/Stepper/Stepper.jsx';
+export { Sidebar } from './components/Sidebar/Sidebar.jsx';
 export { Tabs } from './components/Tabs/Tabs.jsx';
 export { SensitiveDataBanner } from './components/SensitiveDataBanner/SensitiveDataBanner.jsx';

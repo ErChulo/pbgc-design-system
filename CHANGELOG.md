@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.10.0 (2026-11-14)
+
+### Added
+- **Sidebar** with collapsible groups, React and framework-free, built as **disclosure navigation, not an ARIA menu**: links are links, a group heading is a button with `aria-expanded`, and people move with Tab. Enter or Space opens and closes a group; a closed group's links are skipped. Arrow keys are intentionally unused, because a menu role would promise keys navigation does not have.
+- `aria-expanded` is the single source of truth: the controlled list is shown or hidden to match it, so markup and screen readers cannot disagree.
+- The current page is `aria-current="page"` and is drawn with a bar and bold text, not color alone; its group opens by itself.
+- Wide: always shown. Narrow: collapsed behind a Menu button; Escape closes it and returns focus to the button. Two levels at most. Not sticky (a pinned bar covers content and focus, WCAG 2.4.11).
+- `enhanceSidebar` exported (also on `window.PBGC`); fires `pbgc:navgroup { id, expanded }`.
+- `sidebar` scenario in the behavior gate (38 runs, was 36), both builds, with real keystrokes, wide and 375px layouts and axe in both. Six negative controls were each caught: closed groups not hidden, `aria-expanded` not updating, a menu role added, Escape not closing, the narrow list never collapsing, and arrow keys hijacking focus.
+
 ## 1.9.0 (2026-11-14)
 
 ### Added

@@ -144,3 +144,27 @@ export const dateDemos = `
       <p class="pbgc-small pbgc-muted">Never guesses: a two-digit year or an impossible date such as 02/30 is an error that says why.</p>
     </div>
 `;
+
+export const sidebarDemos = `
+    <h3 style="margin-top:2rem">Sidebar</h3>
+    <div class="ref-demo" id="demo-sidebar" style="max-width:20rem">
+      <nav class="pbgc-sidebar" data-pbgc-sidebar aria-label="Sample navigation">
+        <button type="button" class="pbgc-sidebar__toggle" data-sb-toggle aria-expanded="false" aria-controls="sb-list">Menu</button>
+        <ul class="pbgc-sidebar__list" id="sb-list">
+          <li><a class="pbgc-sidebar__link" href="#sample-home">Sample home</a></li>
+          <li><button type="button" class="pbgc-sidebar__group" aria-expanded="true" aria-controls="sb-g1">Sample cases</button>
+            <ul class="pbgc-sidebar__sublist" id="sb-g1">
+              <li><a class="pbgc-sidebar__link" href="#sample-open" aria-current="page">Open cases</a></li>
+              <li><a class="pbgc-sidebar__link" href="#sample-closed">Closed cases</a></li>
+            </ul></li>
+          <li><button type="button" class="pbgc-sidebar__group" aria-expanded="false" aria-controls="sb-g2">Sample reports</button>
+            <ul class="pbgc-sidebar__sublist" id="sb-g2" hidden>
+              <li><a class="pbgc-sidebar__link" href="#sample-monthly">Monthly report</a></li>
+              <li><a class="pbgc-sidebar__link" href="#sample-annual">Annual report</a></li>
+            </ul></li>
+          <li><a class="pbgc-sidebar__link" href="#sample-help">Sample help</a></li>
+        </ul>
+      </nav>
+      <p class="pbgc-small pbgc-muted">Disclosure navigation, not an ARIA menu: Tab moves through links and group buttons, Enter or Space opens a group. On narrow screens it collapses behind a Menu button.</p>
+    </div>
+`;
