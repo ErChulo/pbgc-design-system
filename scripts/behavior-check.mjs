@@ -300,6 +300,44 @@ const SCENARIOS = {
     await btn('Clear all').click();
     assert(await page.evaluate(() => document.querySelectorAll('.pbgc-toast').length === 0), 'Clear all removes every toast');
   },
+
+  // A browser without the Popover API (Firefox ESR 115, Edge/Chrome < 114, Safari < 17) must DEGRADE, not break.
+  async nopopover(page) {
+    const vis = (sel) => page.evaluate((s) => {
+      const e = document.querySelector(s);
+      if (!e) return false;
+      const r = e.getBoundingClientRect();
+      const cs = getComputedStyle(e);
+      return r.width > 0 && r.height > 0 && cs.visibility === 'visible' && cs.display !== 'none';
+    }, sel);
+    assert(await page.evaluate(() => typeof HTMLElement.prototype.showPopover === 'undefined'), 'test setup: the Popover API is gone');
+    assert(await page.evaluate(() => document.documentElement.classList.contains('pbgc-no-popover')), '<html> gets class pbgc-no-popover');
+    assert(page._console.filter((t) => t.includes('no Popover API')).length === 1, 'exactly one console warning explains the degraded mode');
+    // Menu: the dead trigger is hidden, the actions show inline as plain buttons, and selecting still works.
+    assert(!(await vis('.pbgc-menu__trigger')), 'menu trigger is hidden (it could do nothing)');
+    assert(await vis('.pbgc-menu__item'), 'menu actions are visible inline');
+    assert(await page.evaluate(() => !document.querySelector('[role="menuitem"]') && document.querySelector('.pbgc-menu__list').getAttribute('role') === 'group'), 'menu roles are dropped (no false arrow-key promise)');
+    await page.evaluate(() => { window.__sel = null; document.querySelector('[data-pbgc-menu]').addEventListener('pbgc:select', (e) => { window.__sel = e.detail.value; }); });
+    await page.locator('.pbgc-menu__item').first().focus();
+    await page.keyboard.press('Enter');
+    assert((await page.evaluate(() => window.__sel)) === 'view', 'Enter on an action still fires pbgc:select');
+    await page.evaluate(() => { window.__sel = null; });
+    await page.locator('.pbgc-menu__item[aria-disabled="true"]').click({ force: true });
+    assert((await page.evaluate(() => window.__sel)) === null, 'a disabled action fires nothing');
+    // Toggletip help shows inline; tooltip (supplementary text) is hidden but still describes its control.
+    assert(await vis('.pbgc-toggletip__panel') && !(await vis('.pbgc-toggletip__button')), 'toggletip help is inline and its dead button is hidden');
+    assert(!(await vis('.pbgc-tooltip')), 'tooltip is hidden');
+    assert(await page.evaluate(() => document.querySelector('.pbgc-tooltip-host > :first-child').getAttribute('aria-describedby') === document.querySelector('.pbgc-tooltip').id), 'tooltip text still describes its control');
+    await axeOn(page, '#demo-menu', 'degraded menu');
+    await axeOn(page, '#demo-tooltip', 'degraded tooltip and toggletip');
+    // Everything that needs no Popover API keeps working.
+    await page.locator('[data-pbgc-open="dlg-sample"]').click();
+    assert(await page.evaluate(() => !!document.querySelector('dialog[open]')), 'dialogs still open');
+    await page.keyboard.press('Escape');
+    assert(await page.evaluate(() => !document.querySelector('dialog[open]')), 'Escape still closes the dialog');
+    await page.locator('[data-toast="success"]').click();
+    assert(await page.evaluate(() => document.querySelectorAll('.pbgc-toast').length === 1), 'toasts still work');
+  },
 };
 
 // Storybook story id (React build) and whether the reference page (vanilla build) has the scenario too.
@@ -313,7 +351,8 @@ const STORIES = {
   carousel: 'organisms-carousel--default',
   toast: 'organisms-toast--playground',
 };
-const REFERENCE = new Set(['menu', 'dialog', 'tooltip', 'toggletip', 'filepicker', 'carousel', 'toast']); // confirm is React-only sugar over <form method=dialog>
+const REFERENCE = new Set(['menu', 'dialog', 'tooltip', 'toggletip', 'filepicker', 'carousel', 'toast', 'nopopover']);
+const REFERENCE_ONLY = new Set(['nopopover']); // simulates an old browser; only the framework-free page is used // confirm is React-only sugar over <form method=dialog>
 
 let total = 0;
 let failed = 0;
@@ -321,14 +360,25 @@ for (const target of targetArg ? [targetArg] : ['storybook', 'reference']) {
   for (const [name, run] of Object.entries(SCENARIOS)) {
     if (only && !only.includes(name)) continue;
     if (target === 'reference' && !REFERENCE.has(name)) continue;
+    if (target === 'storybook' && REFERENCE_ONLY.has(name)) continue;
     const page = await browser.newPage({ viewport: { width: 1200, height: 900 } });
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
+    page._console = [];
+    page.on('console', (m) => page._console.push(m.text()));
     total++;
     try {
       if (target === 'storybook') {
         await page.goto(`${base}/iframe.html?id=${STORIES[name]}&viewMode=story`, { waitUntil: 'load' });
         await page.waitForSelector('#storybook-root > *', { timeout: 15000 });
+      } else if (name === 'nopopover') {
+        // Remove the Popover API before any page script runs, and strip the `popover` attribute, which a browser
+        // without the API ignores. Then load the same reference page.
+        await page.addInitScript(() => { delete HTMLElement.prototype.showPopover; delete HTMLElement.prototype.hidePopover; delete HTMLElement.prototype.togglePopover; });
+        // (Served through a routed URL: setContent would reuse the already-loaded blank document, so the init script would not run.)
+        const html = readFileSync(refFile, 'utf8').replace(/ popover="manual"/g, '');
+        await page.route('http://old-browser.test/', (route) => route.fulfill({ contentType: 'text/html', body: html }));
+        await page.goto('http://old-browser.test/', { waitUntil: 'load' });
       } else {
         await page.goto(pathToFileURL(refFile).href, { waitUntil: 'load' });
         // The reference page has one demo of each component; scope the page to the one under test.

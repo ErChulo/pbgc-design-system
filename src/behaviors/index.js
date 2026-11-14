@@ -1,4 +1,4 @@
-/* PBGC behaviors v1.2.0
+/* PBGC behaviors v1.2.1
    Framework-free behavior for the interactive components. This file is the ONLY implementation of that
    behavior: the React components render the same markup and call these functions, and the single-file
    reference page inlines this file as-is. One implementation means the two builds cannot drift apart.
@@ -6,13 +6,22 @@
    Contract: markup + data attributes in, behavior out. Every enhance*() returns { destroy, ...extras }.
    No dependencies, no network, no build step required to use it from a plain <script type="module">.
 
-   Browser support: <dialog>, the Popover API (Chrome/Edge 114+, Firefox 125+, Safari 17+) and `inert`.
-   See OPEN-QUESTIONS.md Q17: confirm PBGC's supported browser baseline. */
+   Browser baseline (design.md section 13): Chrome/Edge 114+, Firefox 125+, Safari 17+. Menus, tooltips and
+   toggletips need the Popover API; where it is missing (Firefox ESR 115, older Edge) they DEGRADE instead of
+   breaking: see `support` below. Dialog, spinner, progress, file picker, carousel and toast need nothing newer. */
 
 const $ = (root, sel) => root.querySelector(sel);
 const $$ = (root, sel) => Array.from(root.querySelectorAll(sel));
 let uid = 0;
 const nextId = (prefix) => `${prefix}-${++uid}`;
+/* Feature support. `pbgc-no-popover` on <html> switches the CSS to the degraded layout. Detected once at load. */
+export const support = {
+  popover: typeof HTMLElement !== 'undefined' && typeof HTMLElement.prototype.showPopover === 'function',
+};
+if (!support.popover && typeof document !== 'undefined') {
+  document.documentElement.classList.add('pbgc-no-popover');
+  console.warn('PBGC: this browser has no Popover API (needs Chrome/Edge 114+, Firefox 125+, Safari 17+). Menus show as plain button lists, toggletip help shows inline, and tooltips are hidden.');
+}
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const isOpen = (el) => el.matches(':popover-open');
 
@@ -80,7 +89,26 @@ export const openDialog = (dialog) => { if (!dialog.open) dialog.showModal(); };
 export const closeDialog = (dialog, returnValue) => { if (dialog.open) dialog.close(returnValue); };
 
 /* ---------- Menu button (WAI-ARIA APG "menu button" pattern) ---------- */
+/* Degraded menu (no Popover API): the list shows inline as plain buttons. Items are ordinary tab stops and the
+   menu roles are dropped, because role="menu" promises arrow-key behavior this fallback does not have.
+   'pbgc:select' still fires, so callers (including the React ActionMenu) work unchanged. */
+function enhanceMenuFallback(root) {
+  const ac = new AbortController();
+  const list = $(root, '.pbgc-menu__list');
+  list.setAttribute('role', 'group');
+  list.setAttribute('aria-label', 'Actions');
+  $$(root, '.pbgc-menu__item').forEach((i) => { i.removeAttribute('role'); i.tabIndex = 0; });
+  root.addEventListener('click', (e) => {
+    const item = e.target.closest('.pbgc-menu__item');
+    if (!item) return;
+    if (item.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+    root.dispatchEvent(new CustomEvent('pbgc:select', { bubbles: true, detail: { item, value: item.dataset.value ?? item.textContent.trim() } }));
+  }, { signal: ac.signal });
+  return { open() {}, close() {}, destroy: () => ac.abort() };
+}
+
 export function enhanceMenu(root) {
+  if (!support.popover) return enhanceMenuFallback(root);
   const trigger = $(root, '.pbgc-menu__trigger');
   const list = $(root, '.pbgc-menu__list');
   const ac = new AbortController();
@@ -159,6 +187,7 @@ export function enhanceMenu(root) {
 
 /* ---------- Tooltip (WCAG 1.4.13: dismissible with Escape, hoverable, persistent) ---------- */
 export function enhanceTooltip(host) {
+  if (!support.popover) return { show() {}, hide() {}, destroy() {} }; // tooltips are supplementary by contract; CSS hides them
   const trigger = host.firstElementChild;
   const tip = $(host, '[role="tooltip"]');
   const ac = new AbortController();
@@ -201,6 +230,7 @@ export function enhanceTooltip(host) {
 
 /* ---------- Toggletip (click-to-reveal help; may contain links) ---------- */
 export function enhanceToggletip(host) {
+  if (!support.popover) return { open() {}, close() {}, destroy() {} }; // CSS shows the help text inline instead
   const button = $(host, '.pbgc-toggletip__button');
   const panel = $(host, '.pbgc-toggletip__panel');
   const ac = new AbortController();

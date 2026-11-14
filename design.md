@@ -112,6 +112,7 @@ Rules:
 - **Minimum body size is 10 pt (about 13.3px).** Nothing below 14px carries content.
 - **Numbers in tables and forms use tabular figures** (`font-variant-numeric: tabular-nums`) and right-align.
 - Garamond has a small x-height. It is set at 20px on screen (the cover specification is 16 pt in print).
+- **Decision (v1.2.1, closes Q7):** all web-application UI and body text uses the sans stack (Arial; Helvetica Neue on Mac). Garamond is reserved for long-form fact-sheet and report pages, at 20px, and is never used in controls, tables, forms, menus or notifications.
 
 ---
 
@@ -256,6 +257,27 @@ The guide defers to AP style except where PBGC differs. Rules that surface in UI
 | Plain language | Legally required for documents that explain a benefit or how to comply with a requirement. Follow plainlanguage.gov. |
 | Sample content | Use obviously fictional text. Never invent regulations, deadlines, dollar amounts, or program names in samples. |
 
+### 10.1 Interface text (closes Q15)
+
+The Editorial Style Guide covers prose, not interface text. These rules extend the table above using plainlanguage.gov, and they match the wording the components already use ("There is a problem", the "Error:" prefix). COLA review is welcome but not blocking.
+
+| Element | Rule | Write | Not |
+|---|---|---|---|
+| Buttons | Verb first, sentence case, say what happens. Name the object when it is destructive or ambiguous. | "Save changes", "Download report", "Delete file" | "Submit", "OK", "Click here", "Yes" |
+| Cancel | Always "Cancel", on the safe side of a pair. | "Cancel" / "Delete file" | "No", "Go back" |
+| Links | The text names the destination or action and makes sense out of context. | "Read the Section 508 policy" | "Click here", "Read more", "Link" |
+| Field labels | A noun phrase above the field. Hints go under the label, never in the placeholder. Mark optional fields "(optional)"; do not use asterisks. | "Date of birth" + hint "For example, November 1, 1960" | Placeholder as the only label |
+| Errors | Start with "Error:" (not color alone). Say what is wrong, then how to fix it. No blame, no codes alone, no "invalid". | "Error: Enter the date as MM/DD/YYYY." | "Invalid input", "You entered it wrong", "Error 422" |
+| Error summary | Title "There is a problem". Each item links to its field and repeats the field's error text. | | "Oops!", "Please fix the following" |
+| Notifications | Past tense, specific, no exclamation marks, no humor. One idea per message. | "Report saved." "Import failed: the file is not a CSV." | "Success!", "Something went wrong" |
+| Loading | Present participle that names the work. Do not say "please wait". | "Loading plan data" | "Please wait...", "Loading..." |
+| Confirm dialogs | The title is the question and names the object. The body states the consequence. The buttons repeat the action. | "Delete this file?" / "This cannot be undone." / "Delete file", "Cancel" | "Are you sure?" / "OK" |
+| Empty states | Say what is missing and the next step. | "No cases yet. Add a case to begin." | A blank area, "No data" |
+| Numbers and dates | Follow section 10 (dates "November 1, 2026"; times "8 a.m."). Currency "$1,234.56"; percentages "3%"; units spelled or standard ("years", "mo."). Never truncate figures a person must check. | | "1st Nov", "12 p.m." |
+| Abbreviations | Spell out on first use in a screen with the abbreviation in parentheses. "PBGC" is not expanded. | "Adjustable-rate (AR) factor" | Unexplained actuarial shorthand |
+| Voice | Plain, neutral, direct. Address the person as "you" for actions; say "participant" for the plan member. | | Marketing language, jargon, "utilize" |
+| Sample or demo text | Obviously fictional (see section 10). | "Sample plan A" | Real names, amounts or deadlines |
+
 ---
 
 ## 11. Print
@@ -268,5 +290,18 @@ Fact sheets and letters are printed. Stylesheet rules shipped in `components.css
 
 - **Versioning:** semantic. Any change to a token value is at least a minor version; any removal is major.
 - **Single edit point:** change `tokens/tokens.json`, run `npm run tokens`. Never edit `tokens.css` or `contrast-report.md`.
-- **Derived values** are tracked in `OPEN-QUESTIONS.md` until COLA confirms or replaces them.
+- **Derived values** and every decision made without a PBGC source are tracked in `OPEN-QUESTIONS.md` (each marked Decided, Default in use, or Blocked on PBGC) until COLA confirms or replaces them.
 - **Source map:** the style guide supplied colors, type, logo rules, and editorial rules; `pbgc-logo-guidance.pdf` supplied logo files and clear-space rules; the two interior-page `.docx` templates supplied only the "Main Header / Secondary Header" structure; `pbgc-branding-templates-icons-logo.txt` points to an internal SharePoint library of icons and templates that was not available to this review.
+
+---
+
+## 13. Supported browsers (closes Q17)
+
+**Baseline: current Chrome and Edge 114+, Firefox 125+, Safari 17+.** The newest requirement is the Popover API, used by ActionMenu, Tooltip and Toggletip. Everything else (native `<dialog>`, `inert`, `<progress>`, scroll-snap, CSS `:has()`, `dvh` units) shipped earlier in each of those browsers. Internet Explorer and Edge IE mode are not supported. This baseline is an assumption about PBGC's deployed browsers (`OPEN-QUESTIONS.md` Q17 asks PBGC to confirm).
+
+| Feature missing | Affected components | What happens (v1.2.1) |
+|---|---|---|
+| Popover API (for example Firefox ESR 115) | ActionMenu, Tooltip, Toggletip | The page keeps working. `<html>` gets `pbgc-no-popover` and one console warning is logged. ActionMenu shows its actions inline as plain buttons (still fires `pbgc:select`; menu roles are dropped because the arrow-key model is not available). Toggletip help text shows inline. Tooltips are hidden, which is safe because tooltips never carry essential information (section 8). |
+| Nothing else needs a fallback | Dialog, Spinner, ProgressBar, Skeleton, FilePicker, Carousel, Toast | Covered by the baseline. |
+
+The behavior gate simulates the missing Popover API (`npm run test:behavior`, scenario `nopopover`) and checks that the page degrades as described and that dialogs and toasts still work.
