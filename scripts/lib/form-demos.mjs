@@ -131,3 +131,16 @@ export const displayDemos = `
       </dl>
     </div>
 `;
+
+export const dateDemos = `
+    <h3 style="margin-top:2rem">Date field</h3>
+    <div class="ref-demo" id="demo-datefield">
+      <div class="pbgc-field pbgc-datefield" data-pbgc-date data-min="1900-01-01" data-max="2099-12-31" data-required data-label="Sample date of birth">
+        <label class="pbgc-field__label" for="df-1">Sample date of birth<span class="pbgc-field__required"> (required)</span></label>
+        <p class="pbgc-field__hint" id="df-1-hint">Use MM/DD/YYYY, for example 01/15/1960.</p>
+        <input id="df-1" class="pbgc-field__input pbgc-field__input--date" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" aria-required="true" aria-describedby="df-1-hint df-1-error">
+        <p class="pbgc-field__error" id="df-1-error" data-df-error hidden></p>
+      </div>
+      <p class="pbgc-small pbgc-muted">Never guesses: a two-digit year or an impossible date such as 02/30 is an error that says why.</p>
+    </div>
+`;

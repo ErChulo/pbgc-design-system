@@ -536,3 +536,6 @@ body:has(dialog.pbgc-dialog[open]) { overflow: hidden; }
 .pbgc-stat__value { margin: 0.25rem 0 0; font-size: var(--pbgc-font-size-h2); font-weight: var(--pbgc-font-weight-bold); font-variant-numeric: tabular-nums; line-height: 1.2; overflow-wrap: anywhere; }
 .pbgc-stat__context { margin: 0.375rem 0 0; font-size: var(--pbgc-font-size-small); color: var(--pbgc-text-muted); }
 @media print { .pbgc-stat { break-inside: avoid; } }
+
+/* DateField (v1.9.0): same field look as TextField, sized for ten characters. */
+.pbgc-field__input--date { width: 100%; max-width: 12rem; font-variant-numeric: tabular-nums; }

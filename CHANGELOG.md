@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.9.0 (2026-11-14)
+
+### Added
+- **DateField**, React and framework-free: a calendar date typed as MM/DD/YYYY (US order), built on TextField's markup.
+  - Never guesses. A two-digit year is an error; an impossible date is an error that says why ("February 2024 has 29 days."); day and month are never swapped; a leap year follows the real rule (1900 is not one, 2000 is).
+  - `value` is an ISO date (YYYY-MM-DD) or null: no time zone, no `Date` object in the middle that could shift a day.
+  - Accepts `1/5/1960`, `01-05-1960`, `01.05.1960`, `01051960` and a pasted `1960-01-05`; shows `01/05/1960` on leaving the field. What was typed is left exactly as typed when it is invalid.
+  - Optional `min` and `max` (ISO) whose messages name the limit. Errors appear on blur, then update while typing.
+  - Text input, not `type=date` (varies by browser, region-ordered parts, scroll-wheel changes); no auto-inserted slashes (they move the cursor); no calendar pop-up (a far larger keyboard and accessibility surface than typing a known date needs).
+- `parseDate`, `formatDate`, `daysInMonth`, `isLeapYear` and `enhanceDateField` exported (also on `window.PBGC`).
+- `scripts/date-check.mjs` (`npm run test:dates`): 74,816 checks, including every month/day/year combination from 1900 to 2100 compared with the JavaScript calendar and a format-to-parse round trip for all 73,414 real dates.
+- `datefield` scenario in the behavior gate (36 runs, was 34). Seven negative controls were each caught: century leap rule, swapped day and month, a guessed two-digit year, a 29-day February, no reformatting on blur, an error that does not clear while typing, and invalid text being rewritten.
+
 ## 1.8.0 (2026-11-14)
 
 ### Added
