@@ -445,3 +445,23 @@ body:has(dialog.pbgc-dialog[open]) { overflow: hidden; }
   .pbgc-switch__input:checked ~ .pbgc-switch__track .pbgc-switch__knob { background: HighlightText; }
   .pbgc-switch__input:focus-visible ~ .pbgc-switch__track { outline-color: CanvasText; }
 }
+
+/* SensitiveDataBanner (v1.5.0). Reuses the warning palette (already contrast-tested). A full border plus a heavy top
+   rule: the rule is what survives black-and-white printing and forced colors. Not sticky, not dismissible. */
+.pbgc-pii {
+  display: flex; gap: 0.75rem; align-items: flex-start; margin: 0 0 1.5rem; padding: 0.75rem 1rem;
+  background: var(--pbgc-status-warning-bg); color: var(--pbgc-text-default);
+  border: 1px solid var(--pbgc-status-warning-accent); border-top-width: 6px; border-radius: var(--pbgc-radius-default);
+}
+.pbgc-pii__icon { flex: none; color: var(--pbgc-status-warning-accent); margin-top: 0.125rem; }
+.pbgc-pii__body { min-width: 0; }
+.pbgc-pii__title { margin: 0 0 0.125rem; font-weight: var(--pbgc-font-weight-bold); }
+.pbgc-pii__text { margin: 0; }
+@media print {
+  .pbgc-pii { color: #000; background: #fff; border: 2px solid #000; border-top-width: 8px; break-inside: avoid; print-color-adjust: exact; }
+  .pbgc-pii__icon { color: #000; }
+}
+@media (forced-colors: active) {
+  .pbgc-pii { border-color: CanvasText; }
+  .pbgc-pii__icon { color: CanvasText; }
+}

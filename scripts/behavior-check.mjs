@@ -460,6 +460,22 @@ const SCENARIOS = {
     assert(h >= 44, `target is at least 44px tall (got ${h})`);
     await axeOn(page, '.pbgc-switch', 'switch');
   },
+  async pii(page) {
+    const banner = page.locator('.pbgc-pii').first();
+    assert(await banner.isVisible(), 'banner is visible');
+    const pos = await banner.evaluate((el) => getComputedStyle(el).position);
+    assert(pos !== 'sticky' && pos !== 'fixed', `banner is not sticky or fixed (got ${pos})`);
+    assert((await banner.locator('button, [role=button], [aria-label*=lose]').count()) === 0, 'banner has no dismiss control');
+    assert((await banner.locator('[role=alert], [aria-live]').count()) === 0 && (await attr(page, '.pbgc-pii', 'role')) === null, 'banner is not a live region');
+    // The rule that survives black-and-white printing and forced colors.
+    await page.emulateMedia({ media: 'print' });
+    const printed = await banner.evaluate((el) => { const c = getComputedStyle(el); return [c.borderTopWidth, c.borderTopColor, c.backgroundColor]; });
+    assert(parseFloat(printed[0]) >= 6 && printed[1] === 'rgb(0, 0, 0)' && printed[2] === 'rgb(255, 255, 255)', `prints as a heavy black rule on white (got ${printed})`);
+    await page.emulateMedia({ media: 'screen', forcedColors: 'active' });
+    assert(await banner.evaluate((el) => parseFloat(getComputedStyle(el).borderTopWidth) >= 6), 'the heavy rule remains in forced colors');
+    await page.emulateMedia({ media: 'screen', forcedColors: 'none' });
+    await axeOn(page, '.pbgc-pii', 'sensitive data banner');
+  },
 };
 
 // Storybook story id (React build) and whether the reference page (vanilla build) has the scenario too.
@@ -475,8 +491,9 @@ const STORIES = {
   numeric: 'molecules-numericfield--currency',
   textarea: 'molecules-textarea--with-limit',
   switch: 'molecules-switch--default',
+  pii: 'molecules-sensitivedatabanner--default',
 };
-const REFERENCE = new Set(['menu', 'dialog', 'tooltip', 'toggletip', 'filepicker', 'carousel', 'toast', 'numeric', 'textarea', 'switch', 'nopopover']);
+const REFERENCE = new Set(['menu', 'dialog', 'tooltip', 'toggletip', 'filepicker', 'carousel', 'toast', 'numeric', 'textarea', 'switch', 'pii', 'nopopover']);
 const REFERENCE_ONLY = new Set(['nopopover']); // simulates an old browser; only the framework-free page is used // confirm is React-only sugar over <form method=dialog>
 
 let total = 0;
