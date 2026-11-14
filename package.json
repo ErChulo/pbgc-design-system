@@ -1,6 +1,6 @@
 {
   "name": "pbgc-design-system",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "PBGC design system: tokens, accessible React components, and Storybook.",
   "type": "module",
@@ -14,7 +14,10 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build -o storybook-static",
     "test:a11y": "node scripts/a11y-check.mjs",
-    "test": "npm run tokens:check && npm run build-storybook && npm run test:a11y"
+    "test": "npm run tokens:check && npm run vanilla && npm run reference && npm run build-storybook && npm run test:a11y && npm run test:reference && npm run test:behavior",
+    "vanilla": "node scripts/build-vanilla.mjs",
+    "test:behavior": "node scripts/behavior-check.mjs",
+    "test:reference": "node scripts/reference-check.mjs"
   },
   "devDependencies": {
     "@storybook/addon-a11y": "^10.6.6",
@@ -32,7 +35,10 @@
     ".": "./src/index.js",
     "./tokens.css": "./tokens/tokens.css",
     "./tokens.json": "./tokens/tokens.json",
-    "./components.css": "./src/styles/components.css"
+    "./components.css": "./src/styles/components.css",
+    "./behaviors": "./src/behaviors/index.js",
+    "./pbgc.js": "./dist/pbgc.js",
+    "./pbgc.css": "./dist/pbgc.css"
   },
   "sideEffects": [
     "*.css"

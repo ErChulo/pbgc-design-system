@@ -17,3 +17,12 @@ export { Badge } from './components/Badge/Badge.jsx';
 export { Accordion } from './components/Accordion/Accordion.jsx';
 export { SearchBar } from './components/SearchBar/SearchBar.jsx';
 export { Footer } from './components/Footer/Footer.jsx';
+
+// Overlay and feedback components (v1.2.0). Behavior lives in the framework-free core: see ./behaviors.
+export { Dialog, ConfirmDialog } from './components/Dialog/Dialog.jsx';
+export { Spinner, ProgressBar, Skeleton } from './components/Loading/Loading.jsx';
+export { ActionMenu } from './components/ActionMenu/ActionMenu.jsx';
+export { Tooltip, Toggletip } from './components/Tooltip/Tooltip.jsx';
+export { FilePicker } from './components/FilePicker/FilePicker.jsx';
+export { Carousel } from './components/Carousel/Carousel.jsx';
+export { useToast } from './components/Toast/Toast.jsx';

@@ -1,4 +1,4 @@
-/* PBGC components.css v1.1.0
+/* PBGC components.css v1.2.0
    Plain CSS. Reads tokens only (tokens/tokens.css). No framework dependency, so the
    same file serves Storybook, the single-file reference page, and production apps.
 
@@ -247,6 +247,137 @@ a:hover { color: var(--pbgc-text-link-hover); text-decoration-thickness: 2px; }
 .pbgc-footer__link { display: inline-flex; align-items: center; min-height: var(--pbgc-target-min); }
 .pbgc-footer__note { margin: 0; font-size: var(--pbgc-font-size-small); max-width: var(--pbgc-measure-prose); }
 
+/* ============================================================================
+   Overlay and feedback components (v1.2.0)
+   Dialog, Spinner/ProgressBar/Skeleton, ActionMenu, Tooltip/Toggletip, FilePicker, Carousel, Toast.
+   Popovers and dialogs render in the browser TOP LAYER, so scroll regions never clip them.
+   ============================================================================ */
+
+@keyframes pbgc-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pbgc-spin { to { transform: rotate(360deg); } }
+@keyframes pbgc-stripes { to { background-position: 34px 0; } }
+@keyframes pbgc-pulse { 50% { opacity: 0.55; } }
+@keyframes pbgc-toast-in { from { opacity: 0; transform: translateY(0.5rem); } to { opacity: 1; transform: none; } }
+
+/* ---------- Dialog (native <dialog>) ---------- */
+body:has(dialog.pbgc-dialog[open]) { overflow: hidden; }
+.pbgc-dialog {
+  width: min(40rem, calc(100vw - 2rem)); max-width: none; max-height: calc(100dvh - 2rem);
+  padding: 0; overflow: hidden;
+  color: var(--pbgc-text-default); background: var(--pbgc-bg-page);
+  border: 2px solid var(--pbgc-border-input); border-radius: var(--pbgc-radius-default);
+  box-shadow: var(--pbgc-elevation-3);
+}
+.pbgc-dialog[open] { animation: pbgc-fade var(--pbgc-motion-duration-base) var(--pbgc-motion-easing); }
+.pbgc-dialog::backdrop { background: var(--pbgc-bg-scrim, rgba(0, 0, 0, 0.65)); }
+.pbgc-dialog--sm { width: min(28rem, calc(100vw - 2rem)); }
+.pbgc-dialog--lg { width: min(56rem, calc(100vw - 2rem)); }
+/* The panel scrolls (not the body) so arrow keys scroll it while focus is on the Close button. */
+.pbgc-dialog__panel { display: flex; flex-direction: column; max-height: calc(100dvh - 2rem - 4px); overflow: auto; }
+.pbgc-dialog__header { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: var(--pbgc-space-2); padding: var(--pbgc-space-1) var(--pbgc-space-1) var(--pbgc-space-1) var(--pbgc-space-3); background: var(--pbgc-bg-page); border-bottom: 1px solid var(--pbgc-border-decorative); }
+.pbgc-dialog__title { margin: 0; font-size: var(--pbgc-font-size-h3); line-height: var(--pbgc-font-leading-tight); }
+.pbgc-dialog__close { flex: none; min-width: var(--pbgc-target-min); min-height: var(--pbgc-target-min); padding: 0; font-size: 1.75rem; line-height: 1; color: inherit; background: none; border: 2px solid transparent; border-radius: var(--pbgc-radius-default); cursor: pointer; }
+.pbgc-dialog__close:hover { background: var(--pbgc-bg-subtle); border-color: var(--pbgc-border-input); }
+.pbgc-dialog__body { padding: var(--pbgc-space-3); }
+.pbgc-dialog__body > :first-child { margin-top: 0; }
+.pbgc-dialog__body > :last-child { margin-bottom: 0; }
+.pbgc-dialog__footer { position: sticky; bottom: 0; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--pbgc-space-1); padding: var(--pbgc-space-2) var(--pbgc-space-3); background: var(--pbgc-bg-page); border-top: 1px solid var(--pbgc-border-decorative); }
+/* Drawer: same element, docked to the inline end. */
+.pbgc-dialog--drawer { width: min(30rem, 100vw); height: 100dvh; max-height: none; margin: 0 0 0 auto; border-radius: 0; border-width: 0 0 0 2px; }
+.pbgc-dialog--drawer .pbgc-dialog__panel { height: 100dvh; max-height: none; }
+.pbgc-dialog--drawer .pbgc-dialog__body { flex: 1 1 auto; }
+
+/* ---------- Spinner, ProgressBar, Skeleton ---------- */
+.pbgc-spinner-wrap { display: inline-flex; align-items: center; gap: var(--pbgc-space-1); }
+.pbgc-spinner { flex: none; width: 1.5rem; height: 1.5rem; border: 3px solid var(--pbgc-border-decorative); border-top-color: var(--pbgc-text-link); border-radius: 50%; animation: pbgc-spin 0.9s linear infinite; }
+.pbgc-spinner-wrap--sm .pbgc-spinner { width: 1rem; height: 1rem; border-width: 2px; }
+.pbgc-spinner-wrap--lg .pbgc-spinner { width: 3rem; height: 3rem; border-width: 5px; }
+/* A looping animation cannot use the 0.01 ms motion tokens (it would blur). Reduced motion = a static ring plus the text label. */
+@media (prefers-reduced-motion: reduce) { .pbgc-spinner { animation: none; } }
+@media (forced-colors: active) { .pbgc-spinner { forced-color-adjust: none; border-color: GrayText; border-top-color: Highlight; } }
+
+.pbgc-progress__label { display: block; margin-bottom: 0.25rem; font-weight: var(--pbgc-font-weight-bold); }
+.pbgc-progress__row { display: flex; align-items: center; gap: var(--pbgc-space-2); }
+.pbgc-progress__bar { flex: 1 1 auto; width: 100%; height: 1rem; appearance: none; -webkit-appearance: none; overflow: hidden; color: var(--pbgc-action-primary-bg); background: var(--pbgc-bg-subtle); border: 2px solid var(--pbgc-border-input); border-radius: 999px; }
+.pbgc-progress__bar::-webkit-progress-bar { background: var(--pbgc-bg-subtle); }
+.pbgc-progress__bar::-webkit-progress-value { background: var(--pbgc-action-primary-bg); transition: width var(--pbgc-motion-duration-base) var(--pbgc-motion-easing); }
+.pbgc-progress__bar::-moz-progress-bar { background: var(--pbgc-action-primary-bg); }
+.pbgc-progress__bar:indeterminate { background: repeating-linear-gradient(45deg, var(--pbgc-action-primary-bg) 0 12px, var(--pbgc-bg-subtle) 12px 24px); background-size: 34px 34px; animation: pbgc-stripes 1s linear infinite; }
+.pbgc-progress__bar:indeterminate::-webkit-progress-bar { background: transparent; }
+@media (prefers-reduced-motion: reduce) { .pbgc-progress__bar:indeterminate { animation: none; } }
+@media (forced-colors: active) {
+  .pbgc-progress__bar::-webkit-progress-value { background: Highlight; }
+  .pbgc-progress__bar::-moz-progress-bar { background: Highlight; }
+}
+.pbgc-progress__value { min-width: 3.5ch; text-align: right; font-weight: var(--pbgc-font-weight-bold); font-variant-numeric: tabular-nums; }
+
+.pbgc-skeleton { display: flex; flex-direction: column; gap: 0.75rem; max-width: var(--pbgc-measure-prose); }
+.pbgc-skeleton__line { display: block; height: 1rem; background: var(--pbgc-border-decorative); border-radius: var(--pbgc-radius-default); }
+.pbgc-skeleton__line:last-of-type { width: 60%; }
+@media (prefers-reduced-motion: no-preference) { .pbgc-skeleton__line { animation: pbgc-pulse 1.6s ease-in-out infinite; } }
+@media (forced-colors: active) { .pbgc-skeleton__line { forced-color-adjust: none; background: GrayText; } }
+
+/* ---------- ActionMenu (menu button) ---------- */
+.pbgc-menu { display: inline-block; }
+.pbgc-menu__caret { width: 0; height: 0; margin-left: 0.25rem; border-inline: 0.3rem solid transparent; border-top: 0.4rem solid currentColor; }
+.pbgc-menu__list { min-width: 12rem; max-width: min(24rem, calc(100vw - 1rem)); margin: 0; padding: 0.25rem; color: var(--pbgc-text-default); background: var(--pbgc-bg-page); border: 2px solid var(--pbgc-border-input); border-radius: var(--pbgc-radius-default); box-shadow: var(--pbgc-elevation-2); }
+.pbgc-menu__list:not([data-placed]) { visibility: hidden; }
+.pbgc-menu__item { display: flex; align-items: center; width: 100%; min-height: var(--pbgc-target-min); padding: 0.5rem 0.75rem; font: inherit; text-align: left; text-decoration: none; color: inherit; background: none; border: 2px solid transparent; border-radius: var(--pbgc-radius-default); cursor: pointer; }
+.pbgc-menu__item:hover, .pbgc-menu__item:focus { background: var(--pbgc-bg-subtle); }
+/* Always show the ring on a focused item: the menu is an active composite widget. Inset so the list never clips it. */
+.pbgc-menu__item:focus { outline: var(--pbgc-focus-width) solid var(--pbgc-focus-ring); outline-offset: -3px; }
+.pbgc-menu__item--danger { font-weight: var(--pbgc-font-weight-bold); color: var(--pbgc-status-error-accent); }
+.pbgc-menu__item[aria-disabled='true'] { color: var(--pbgc-text-muted); cursor: not-allowed; text-decoration: line-through; text-decoration-thickness: 1px; }
+@media (forced-colors: active) { .pbgc-menu__item:hover { outline: 2px solid Highlight; outline-offset: -3px; } }
+
+/* ---------- Tooltip and Toggletip ---------- */
+.pbgc-tooltip-host { display: inline-block; }
+.pbgc-tooltip { max-width: min(20rem, calc(100vw - 1rem)); margin: 0; padding: 0.5rem 0.75rem; overflow: visible; font-size: var(--pbgc-font-size-small); line-height: 1.4; color: var(--pbgc-text-inverse); background: var(--pbgc-bg-inverse); border: 1px solid var(--pbgc-text-inverse); border-radius: var(--pbgc-radius-default); box-shadow: var(--pbgc-elevation-2); }
+.pbgc-tooltip:not([data-placed]) { visibility: hidden; }
+.pbgc-toggletip { display: inline-block; }
+.pbgc-toggletip__button { display: inline-flex; align-items: center; justify-content: center; min-width: var(--pbgc-target-min); min-height: var(--pbgc-target-min); padding: 0; color: var(--pbgc-text-link); background: none; border: 2px solid transparent; border-radius: var(--pbgc-radius-default); cursor: pointer; }
+.pbgc-toggletip__button:hover { background: var(--pbgc-bg-subtle); }
+.pbgc-toggletip__panel { max-width: min(24rem, calc(100vw - 1rem)); margin: 0; padding: var(--pbgc-space-2); color: var(--pbgc-text-default); background: var(--pbgc-bg-page); border: 2px solid var(--pbgc-border-input); border-radius: var(--pbgc-radius-default); box-shadow: var(--pbgc-elevation-2); }
+.pbgc-toggletip__panel:not([data-placed]) { visibility: hidden; }
+.pbgc-toggletip__panel > :first-child { margin-top: 0; }
+.pbgc-toggletip__panel > :last-child { margin-bottom: 0; }
+
+/* ---------- FilePicker ---------- */
+.pbgc-filepicker { max-width: 40rem; }
+.pbgc-filepicker__label { display: block; margin-bottom: 0.25rem; font-weight: var(--pbgc-font-weight-bold); }
+.pbgc-filepicker__hint { margin: 0 0 var(--pbgc-space-1); font-size: var(--pbgc-font-size-small); color: var(--pbgc-text-muted); }
+.pbgc-filepicker__zone { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--pbgc-space-1); min-height: 9rem; padding: var(--pbgc-space-3); text-align: center; background: var(--pbgc-bg-subtle); border: 2px dashed var(--pbgc-border-input); border-radius: var(--pbgc-radius-default); }
+.pbgc-filepicker__zone.is-dragover { background: var(--pbgc-status-info-bg); border-style: solid; border-color: var(--pbgc-text-link); }
+/* The native input covers the whole zone (click anywhere, and native drop works with no script). It is invisible, so the ring goes on the zone. */
+.pbgc-filepicker__input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.pbgc-filepicker__zone:has(.pbgc-filepicker__input:focus-visible) { outline: var(--pbgc-focus-width) solid var(--pbgc-focus-ring); outline-offset: var(--pbgc-focus-offset); }
+.pbgc-filepicker__prompt { margin: 0; }
+.pbgc-filepicker__errors { margin-top: var(--pbgc-space-1); }
+.pbgc-filepicker__error { display: flex; align-items: flex-start; gap: var(--pbgc-space-1); margin: 0.25rem 0; font-weight: var(--pbgc-font-weight-bold); color: var(--pbgc-status-error-accent); }
+.pbgc-filepicker__error-icon { flex: none; }
+.pbgc-filepicker__list { margin: var(--pbgc-space-2) 0 0; padding: 0; list-style: none; border-top: 1px solid var(--pbgc-border-decorative); }
+.pbgc-filepicker__item { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem var(--pbgc-space-2); padding: 0.5rem 0; border-bottom: 1px solid var(--pbgc-border-decorative); }
+.pbgc-filepicker__name { flex: 1 1 12rem; min-width: 0; overflow-wrap: anywhere; font-weight: var(--pbgc-font-weight-bold); }
+.pbgc-filepicker__size { color: var(--pbgc-text-muted); font-variant-numeric: tabular-nums; }
+
+/* ---------- Carousel (no autoplay) ---------- */
+/* min-width: 0 so a carousel inside a grid or flex parent shrinks to fit instead of sizing to its slides. */
+.pbgc-carousel { max-width: 48rem; min-width: 0; }
+.pbgc-carousel__track { display: flex; min-width: 0; overflow-x: auto; scroll-snap-type: x mandatory; border: 2px solid var(--pbgc-border-decorative); border-radius: var(--pbgc-radius-default); }
+.pbgc-carousel__slide { flex: 0 0 100%; min-height: 10rem; padding: var(--pbgc-space-3); scroll-snap-align: start; scroll-snap-stop: always; }
+.pbgc-carousel__slide > :first-child { margin-top: 0; }
+.pbgc-carousel__controls { display: flex; align-items: center; justify-content: space-between; gap: var(--pbgc-space-2); margin-top: var(--pbgc-space-1); }
+.pbgc-carousel__status { margin: 0; font-variant-numeric: tabular-nums; }
+
+/* ---------- Toast ---------- */
+.pbgc-toast-region { position: fixed; z-index: var(--pbgc-z-toast); right: var(--pbgc-space-2); bottom: var(--pbgc-space-2); display: flex; flex-direction: column; gap: var(--pbgc-space-1); width: min(26rem, calc(100vw - 2rem)); pointer-events: none; }
+.pbgc-toast-region__live { display: flex; flex-direction: column; gap: var(--pbgc-space-1); }
+.pbgc-toast { pointer-events: auto; box-shadow: var(--pbgc-elevation-2); animation: pbgc-toast-in var(--pbgc-motion-duration-base) var(--pbgc-motion-easing); }
+.pbgc-toast__dismiss { flex: none; min-width: var(--pbgc-target-min); min-height: var(--pbgc-target-min); margin: -0.5rem -0.75rem -0.5rem auto; padding: 0; font-size: 1.5rem; line-height: 1; color: inherit; background: none; border: 2px solid transparent; border-radius: var(--pbgc-radius-default); cursor: pointer; }
+.pbgc-toast__dismiss:hover { border-color: currentColor; }
+
+@media print { .pbgc-toast-region, .pbgc-menu__list, .pbgc-tooltip, .pbgc-toggletip__panel, .pbgc-carousel__controls { display: none !important; } }
+
 /* ---------- print (brand is print-heavy; fact sheets get printed) ---------- */
 @media print {
   body { background: #fff; color: #000; font-size: 12pt; }
@@ -255,3 +386,4 @@ a:hover { color: var(--pbgc-text-link-hover); text-decoration-thickness: 2px; }
   a[href^='http']::after { content: ' (' attr(href) ')'; font-size: 10pt; }
   .pbgc-card { break-inside: avoid; box-shadow: none; }
 }
+.pbgc-dialog__actions { display: contents; }

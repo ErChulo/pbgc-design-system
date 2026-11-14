@@ -147,7 +147,7 @@ The v1.0.0 mapping "desktop = Word interior-page template" is withdrawn: the two
 
 - **CSS transitions only.** 150 ms for state changes, 250 ms for elevation. GSAP is not required and not used. (A library mandate is an engineering decision, not a design rule; add one only after a dependency and license review.)
 - **Reduced motion is honored at the token level:** under `prefers-reduced-motion: reduce`, `--pbgc-motion-duration-*` become 0.01 ms, so no component can forget to check.
-- No autoplay, parallax, or looping animation. Nothing moves for more than 5 seconds.
+- No autoplay and no parallax. The ONLY looping animation allowed is a loading indicator (Spinner, indeterminate ProgressBar, Skeleton) while work is genuinely in progress: it is an essential activity under WCAG 2.2.2, always carries a text label, and stops under `prefers-reduced-motion`. Because a loop cannot use the 0.01 ms motion tokens, those three components switch their animation off in their own `prefers-reduced-motion` blocks. Nothing else moves for more than 5 seconds.
 - Hover effects never carry meaning on their own.
 
 ---
@@ -173,8 +173,15 @@ The v1.0.0 mapping "desktop = Word interior-page template" is withdrawn: the two
 | Accordion | Organism | Built | Native `<details>/<summary>`: browser supplies keyboard and state; optional exclusive mode |
 | SearchBar | Molecule | Built | `<form role="search">`, visible label by default, GET submit, no JavaScript required |
 | Footer | Organism | Built | `<footer>` landmark on PBGC Blue; white logo; underlined white links; column headings are `h2` |
+| Dialog, ConfirmDialog, drawer | Organism | Built (v1.2) | Native `<dialog>` + `showModal()`: page behind is inert, Escape closes, focus returns to the opener; named by its heading; backdrop press closes only if the press also STARTED on the backdrop; ConfirmDialog starts focus on Cancel |
+| Spinner, ProgressBar, Skeleton | Atom | Built (v1.2) | Always a text label; `role="status"`; native `<progress>`; percentage shown as text; static under reduced motion |
+| ActionMenu | Molecule | Built (v1.2) | WAI-ARIA APG menu button (§8). For row and toolbar actions only, never site navigation or form values |
+| Tooltip, Toggletip | Molecule | Built (v1.2) | WCAG 1.4.13: hoverable, dismissible with Escape, persistent. Tooltip is supplementary text for a focusable control; Toggletip is click-to-open for longer or linked help |
+| FilePicker | Molecule | Built (v1.2) | Native `<input type=file>` over a drop zone (keyboard works with no script); type and size errors are text; Remove returns focus to a neighbour; reads files locally and never uploads |
+| Carousel | Organism | Built (v1.2) | No autoplay; Previous/Next are `aria-disabled` (focus never stranded); off-screen slides are `inert`; "Slide n of N" status. Prefer Tabs or a Stepper for sequences |
+| Toast (`useToast`, `PBGC.toast`) | Organism | Built (v1.2) | Two persistent live regions (polite; assertive for errors); info/success auto-dismiss at 10 s, warning/error persist; hover or focus pauses; status word is text; Escape and a Dismiss button |
 | Sidebar, NavGroup, date input | | Backlog | Native-element first; see `OPEN-QUESTIONS.md` Q16 |
-| Tabs, modal, charts | | Backlog | Custom widgets: full keyboard model required before building (see §8) |
+| Tabs, charts, Stepper, numeric field | | Backlog | Custom widgets: full keyboard model required before building (see §8) |
 
 Naming note: v1.0.0 mixed up layers (Input as a molecule, Alert as an organism). Layer here means: **atom** = single element; **molecule** = a small group working as one unit; **organism** = a self-contained section.
 
@@ -185,9 +192,11 @@ Naming note: v1.0.0 mixed up layers (Input as a molecule, Alert as an organism).
 Native elements first. If a custom widget is unavoidable, it must implement the WAI-ARIA Authoring Practices pattern completely:
 
 - **Tabs:** `role=tablist/tab/tabpanel`, `aria-selected`, Left/Right arrows, Home/End, roving tabindex.
-- **Modal dialog:** focus moves in, is trapped, Escape closes, focus returns to the trigger.
+- **Modal dialog:** use native `<dialog>` + `showModal()`. Focus moves in, the page behind is inert, Escape closes, focus returns to the trigger. Be precise about "trapped": a native modal does NOT wrap focus. After the last control, Tab moves to the browser's own UI and the next Tab re-enters the dialog. The guarantee is that focus never reaches page content behind it.
+- **Menu button (ActionMenu):** Enter, Space or ArrowDown opens on the first item; ArrowUp opens on the last; arrows move and wrap; Home/End jump; a typed letter jumps to the next item starting with it; Escape closes and returns focus to the button; Tab closes. Items use roving `tabindex`. Disabled items stay focusable (`aria-disabled`).
+- **Tooltip:** shows on hover and keyboard focus, stays while the pointer is over it, Escape dismisses it without moving focus. Never holds essential information.
 - **Disclosure/accordion:** `aria-expanded`, `aria-controls`, Enter and Space.
-- **Menus and dropdowns:** do not build one until a native `<select>` or disclosure cannot do the job.
+- **Menus and dropdowns:** ActionMenu is the single sanctioned custom menu, built because row and toolbar actions cannot be done with a native `<select>` or disclosure. Do not build another; to choose a form value use Select, for navigation use links.
 
 ---
 
@@ -210,6 +219,8 @@ npm run tokens:check        # every color pair, both themes, fails below thresho
 npm run build-storybook
 npm run test:a11y           # axe-core, WCAG 2.0-2.2 A/AA + best practices, every story, both themes
 ```
+
+**Behavior gate (`npm run test:behavior`).** axe cannot test keyboard models, focus return, timing or open states. This gate drives the interactive components with real keystrokes and pointer events and runs axe on each OPEN state. It runs every scenario against both the React build and the framework-free build and expects identical results. `npm run test:reference` checks the single-file reference page at 1200px and 375px in both themes: 0 axe violations, no horizontal scroll, no network requests.
 
 ### 9.4 Manual checks (required before any release; automation cannot do these)
 
