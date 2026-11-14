@@ -11,7 +11,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildVanilla } from './lib/vanilla.mjs';
 import { overlayDemos, overlayDemoScript } from './lib/overlay-demos.mjs';
-import { numericDemos, textFieldDemos, piiDemos, tabsDemos } from './lib/form-demos.mjs';
+import { numericDemos, textFieldDemos, piiDemos, tabsDemos, stepperDemos } from './lib/form-demos.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -54,7 +54,7 @@ const html = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PBGC design system reference v1.6.0</title>
+<title>PBGC design system reference v1.7.0</title>
 <style>
 ${tokensCss}
 ${componentsCss}
@@ -86,7 +86,7 @@ ${componentsCss}
 
 <main id="main" class="ref-main" tabindex="-1">
   <h1>PBGC design system reference</h1>
-  <p class="pbgc-lead pbgc-prose">Version 1.6.0. One file, no dependencies, no network calls. Built from <code>tokens/tokens.json</code> and <code>src/styles/components.css</code>.</p>
+  <p class="pbgc-lead pbgc-prose">Version 1.7.0. One file, no dependencies, no network calls. Built from <code>tokens/tokens.json</code> and <code>src/styles/components.css</code>.</p>
   <p><button type="button" class="pbgc-button pbgc-button--secondary" id="themeToggle" aria-pressed="false">Dark theme (provisional)</button></p>
   <p class="pbgc-small pbgc-muted pbgc-prose">The PBGC style guide defines no dark theme. The dark theme here is provisional and must not ship without COLA approval.</p>
 
@@ -175,6 +175,7 @@ ${numericDemos}
 ${textFieldDemos}
 ${piiDemos}
 ${tabsDemos}
+${stepperDemos}
   </section>
 
   <section class="ref-section" id="contrast" aria-labelledby="h-contrast">

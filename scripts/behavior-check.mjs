@@ -532,6 +532,42 @@ const SCENARIOS = {
     assert((await stops(man)) === 1 && (await sel(man)) === '001', 'after leaving, only the selected tab is a Tab stop');
     assert(await page.evaluate(() => { const p = document.activeElement?.closest('[role=tabpanel]'); return !!p && document.getElementById(p.getAttribute('aria-labelledby'))?.getAttribute('aria-selected') === 'true'; }), 'Tab from a manual tab list goes to the SELECTED panel');
   },
+  async stepper(page) {
+    const root = page.locator('.pbgc-stepper').first();
+    const items = root.locator('ol > li');
+    assert((await items.count()) >= 3, 'steps are list items of an ordered list');
+    assert((await root.locator('ol[aria-label]').count()) === 1, 'the list has an accessible name');
+    assert((await root.locator('[aria-current="step"]').count()) === 1, 'exactly one step is aria-current="step"');
+    const cur = await root.locator('[aria-current="step"]').evaluate((li) => li.className);
+    assert(cur.includes('--current'), 'aria-current is on the current step');
+
+    // State is written, not only drawn: every step has screen-reader text for its state.
+    const texts = await items.evaluateAll((lis) => lis.map((li) => li.querySelector('.pbgc-sr-only')?.textContent.trim()));
+    assert(texts.every((t) => /(completed|current step|not completed)$/.test(t || '')), `every step has its state written for screen readers (got ${JSON.stringify(texts)})`);
+    assert(texts.filter((t) => t.endsWith('current step')).length === 1, 'exactly one step says "current step"');
+
+    // The visible summary states the position in plain text, and agrees with aria-current.
+    const summary = await root.locator('.pbgc-stepper__summary').textContent();
+    const label = await root.locator('[aria-current="step"] .pbgc-stepper__label').textContent();
+    assert(summary.includes(label) && /Step \d+ of \d+/.test(summary), `summary names the position (got "${summary}")`);
+
+    // Shape, not only color: completed steps hold a check mark, the others hold their number.
+    const marks = await items.evaluateAll((lis) => lis.map((li) => (li.querySelector('.pbgc-stepper__marker svg') ? 'check' : li.querySelector('.pbgc-stepper__marker').textContent.trim())));
+    const states = await items.evaluateAll((lis) => lis.map((li) => /--complete/.test(li.className) ? 'c' : /--current/.test(li.className) ? 'n' : 'u'));
+    assert(marks.every((m, i) => (states[i] === 'c') === (m === 'check')), `completed steps show a check mark and the rest show numbers (got ${JSON.stringify(marks)})`);
+
+    // Only completed steps may be links; the current and upcoming steps never are.
+    assert((await root.locator('li:not([class*="--complete"]) a').count()) === 0, 'current and upcoming steps are not links');
+    await axeOn(page, '.pbgc-stepper', 'stepper');
+
+    // Narrow screens: a column, with no sideways scroll.
+    await page.setViewportSize({ width: 375, height: 800 });
+    await page.waitForTimeout(150);
+    const tops = await items.evaluateAll((lis) => lis.map((li) => Math.round(li.getBoundingClientRect().top)));
+    assert(new Set(tops).size === tops.length, `at 375px the steps stack in a column (tops ${JSON.stringify(tops)})`);
+    assert(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'no horizontal scroll at 375px');
+    await axeOn(page, '.pbgc-stepper', 'stepper at 375px');
+  },
 };
 
 // Storybook story id (React build) and whether the reference page (vanilla build) has the scenario too.
@@ -549,8 +585,9 @@ const STORIES = {
   switch: 'molecules-switch--default',
   pii: 'molecules-sensitivedatabanner--default',
   tabs: 'molecules-tabs--default',
+  stepper: 'molecules-stepper--default',
 };
-const REFERENCE = new Set(['menu', 'dialog', 'tooltip', 'toggletip', 'filepicker', 'carousel', 'toast', 'numeric', 'textarea', 'switch', 'pii', 'tabs', 'nopopover']);
+const REFERENCE = new Set(['menu', 'dialog', 'tooltip', 'toggletip', 'filepicker', 'carousel', 'toast', 'numeric', 'textarea', 'switch', 'pii', 'tabs', 'stepper', 'nopopover']);
 const REFERENCE_ONLY = new Set(['nopopover']); // simulates an old browser; only the framework-free page is used // confirm is React-only sugar over <form method=dialog>
 
 let total = 0;
